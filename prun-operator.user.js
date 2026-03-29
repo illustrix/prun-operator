@@ -7,6 +7,8 @@
 // @match        https://apex.prosperousuniverse.com/
 // @icon         https://www.google.com/s2/favicons?sz=64&domain=prosperousuniverse.com
 // @grant        none
+// @updateURL    https://prop.auroras.xyz/prun-operator.user.js
+// @downloadURL  https://prop.auroras.xyz/prun-operator.user.js
 // ==/UserScript==
 
 (function() {

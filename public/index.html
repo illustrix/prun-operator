@@ -1,265 +1,342 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PrUn Operator</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PrUn Operator</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
-    body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: #0a0e17;
-      color: #c8d6e5;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
+      body {
+        font-family:
+          "Segoe UI",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background: #0a0e17;
+        color: #c8d6e5;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
 
-    header {
-      width: 100%;
-      padding: 48px 24px 40px;
-      text-align: center;
-      background: linear-gradient(180deg, #101828 0%, #0a0e17 100%);
-      border-bottom: 1px solid #1a2332;
-    }
+      header {
+        width: 100%;
+        padding: 48px 24px 40px;
+        text-align: center;
+        background: linear-gradient(180deg, #101828 0%, #0a0e17 100%);
+        border-bottom: 1px solid #1a2332;
+      }
 
-    header h1 {
-      font-size: 2.4rem;
-      font-weight: 700;
-      color: #e2e8f0;
-      letter-spacing: -0.5px;
-    }
+      header h1 {
+        font-size: 2.4rem;
+        font-weight: 700;
+        color: #e2e8f0;
+        letter-spacing: -0.5px;
+      }
 
-    header h1 span {
-      color: #3b82f6;
-    }
+      header h1 span {
+        color: #3b82f6;
+      }
 
-    header p.tagline {
-      margin-top: 12px;
-      font-size: 1.1rem;
-      color: #8899aa;
-      max-width: 520px;
-      margin-left: auto;
-      margin-right: auto;
-      line-height: 1.6;
-    }
+      header p.tagline {
+        margin-top: 12px;
+        font-size: 1.1rem;
+        color: #8899aa;
+        max-width: 520px;
+        margin-left: auto;
+        margin-right: auto;
+        line-height: 1.6;
+      }
 
-    .version-badge {
-      display: inline-block;
-      margin-top: 16px;
-      padding: 4px 12px;
-      font-size: 0.8rem;
-      color: #3b82f6;
-      border: 1px solid #1e3a5f;
-      border-radius: 999px;
-      background: #0d1b2a;
-    }
+      .version-badge {
+        display: inline-block;
+        margin-top: 16px;
+        padding: 4px 12px;
+        font-size: 0.8rem;
+        color: #3b82f6;
+        border: 1px solid #1e3a5f;
+        border-radius: 999px;
+        background: #0d1b2a;
+      }
 
-    main {
-      width: 100%;
-      max-width: 640px;
-      padding: 40px 24px 60px;
-    }
+      main {
+        width: 100%;
+        max-width: 640px;
+        padding: 40px 24px 60px;
+      }
 
-    .install-section {
-      text-align: center;
-      margin-bottom: 48px;
-    }
+      .install-section {
+        text-align: center;
+        margin-bottom: 48px;
+      }
 
-    .install-btn {
-      display: inline-block;
-      padding: 14px 36px;
-      font-size: 1.05rem;
-      font-weight: 600;
-      color: #fff;
-      background: #3b82f6;
-      border: none;
-      border-radius: 8px;
-      text-decoration: none;
-      transition: background 0.2s, transform 0.1s;
-      cursor: pointer;
-    }
+      .install-btn {
+        display: inline-block;
+        padding: 14px 36px;
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #fff;
+        background: #3b82f6;
+        border: none;
+        border-radius: 8px;
+        text-decoration: none;
+        transition:
+          background 0.2s,
+          transform 0.1s;
+        cursor: pointer;
+      }
 
-    .install-btn:hover {
-      background: #2563eb;
-      transform: translateY(-1px);
-    }
+      .install-btn:hover {
+        background: #2563eb;
+        transform: translateY(-1px);
+      }
 
-    .install-btn:active {
-      transform: translateY(0);
-    }
+      .install-btn:active {
+        transform: translateY(0);
+      }
 
-    .install-hint {
-      margin-top: 12px;
-      font-size: 0.85rem;
-      color: #5a6a7a;
-    }
+      .install-hint {
+        margin-top: 12px;
+        font-size: 0.85rem;
+        color: #5a6a7a;
+      }
 
-    .install-hint a {
-      color: #3b82f6;
-      text-decoration: none;
-    }
+      .install-hint a {
+        color: #3b82f6;
+        text-decoration: none;
+      }
 
-    .install-hint a:hover {
-      text-decoration: underline;
-    }
+      .install-hint a:hover {
+        text-decoration: underline;
+      }
 
-    section {
-      margin-bottom: 36px;
-    }
+      section {
+        margin-bottom: 36px;
+      }
 
-    section h2 {
-      font-size: 1.15rem;
-      font-weight: 600;
-      color: #e2e8f0;
-      margin-bottom: 16px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #1a2332;
-    }
+      section h2 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        color: #e2e8f0;
+        margin-bottom: 16px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid #1a2332;
+      }
 
-    .feature-list {
-      list-style: none;
-    }
+      .feature-list {
+        list-style: none;
+      }
 
-    .feature-list li {
-      padding: 12px 0;
-      border-bottom: 1px solid #111a27;
-      display: flex;
-      gap: 12px;
-      align-items: flex-start;
-      line-height: 1.5;
-    }
+      .feature-list li {
+        padding: 12px 0;
+        border-bottom: 1px solid #111a27;
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        line-height: 1.5;
+      }
 
-    .feature-list li:last-child {
-      border-bottom: none;
-    }
+      .feature-list li:last-child {
+        border-bottom: none;
+      }
 
-    .feature-icon {
-      flex-shrink: 0;
-      width: 28px;
-      height: 28px;
-      background: #111a27;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      margin-top: 1px;
-    }
+      .feature-icon {
+        flex-shrink: 0;
+        width: 28px;
+        height: 28px;
+        background: #111a27;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        margin-top: 1px;
+      }
 
-    .feature-list strong {
-      color: #e2e8f0;
-    }
+      .feature-list strong {
+        color: #e2e8f0;
+      }
 
-    .steps {
-      counter-reset: step;
-      list-style: none;
-    }
+      .steps {
+        counter-reset: step;
+        list-style: none;
+      }
 
-    .steps li {
-      counter-increment: step;
-      padding: 10px 0;
-      padding-left: 36px;
-      position: relative;
-      line-height: 1.6;
-    }
+      .steps li {
+        counter-increment: step;
+        padding: 10px 0;
+        padding-left: 36px;
+        position: relative;
+        line-height: 1.6;
+      }
 
-    .steps li::before {
-      content: counter(step);
-      position: absolute;
-      left: 0;
-      top: 10px;
-      width: 24px;
-      height: 24px;
-      background: #111a27;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: #3b82f6;
-    }
+      .steps li::before {
+        content: counter(step);
+        position: absolute;
+        left: 0;
+        top: 10px;
+        width: 24px;
+        height: 24px;
+        background: #111a27;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #3b82f6;
+      }
 
-    .steps code {
-      background: #111a27;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 0.9em;
-      color: #93c5fd;
-    }
+      .steps code {
+        background: #111a27;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.9em;
+        color: #93c5fd;
+      }
 
-    footer {
-      margin-top: auto;
-      width: 100%;
-      text-align: center;
-      padding: 24px;
-      font-size: 0.8rem;
-      color: #3a4a5a;
-      border-top: 1px solid #111a27;
-    }
+      footer {
+        margin-top: auto;
+        width: 100%;
+        text-align: center;
+        padding: 24px;
+        font-size: 0.8rem;
+        color: #3a4a5a;
+        border-top: 1px solid #111a27;
+      }
 
-    footer a {
-      color: #5a6a7a;
-      text-decoration: none;
-    }
+      footer a {
+        color: #5a6a7a;
+        text-decoration: none;
+      }
 
-    footer a:hover {
-      color: #8899aa;
-    }
-  </style>
-</head>
-<body>
-
-  <header>
-    <h1>PrUn <span>Operator</span></h1>
-    <p class="tagline">An automation tool for Prosperous Universe. Auto-fill contract drafts, auto-fulfill contracts, and more.</p>
-    <span class="version-badge" id="version">latest updated: 2026-03-30</span>
-  </header>
-
-  <main>
-    <div class="install-section">
-      <a class="install-btn" href="/prun-operator.user.js">Install Userscript</a>
-      <p class="install-hint">
-        Requires a userscript manager like  <a href="https://www.tampermonkey.net/" target="_blank" rel="noopener">Tampermonkey</a> or <a href="https://violentmonkey.github.io/" target="_blank" rel="noopener">Violentmonkey</a>.
+      footer a:hover {
+        color: #8899aa;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>PrUn <span>Operator</span></h1>
+      <p class="tagline">
+        An automation tool for Prosperous Universe. Auto-fill contract drafts,
+        auto-fulfill contracts, and more.
       </p>
-    </div>
+      <span class="version-badge" id="version">latest updated: 2026-03-30</span>
+    </header>
 
-    <section>
-      <h2>Features</h2>
-      <ul class="feature-list">
-        <li>
-          <div class="feature-icon">&#9998;</div>
-          <div><strong>Contract Draft Auto-Fill</strong> &mdash; Paste a JSON config and auto-populate template, currency, commodities, prices, and location in one click.</div>
-        </li>
-        <li>
-          <div class="feature-icon">&#9889;</div>
-          <div><strong>Contract Auto-Fulfill</strong> &mdash; Automatically clicks all available "fulfill" buttons on a contract tile, handling feedback dismissal and errors.</div>
-        </li>
-        <li>
-          <div class="feature-icon">&#128270;</div>
-          <div><strong>Tile-Aware</strong> &mdash; Automatically detects and enhances relevant tiles as they appear, with no manual setup required.</div>
-        </li>
-      </ul>
-    </section>
+    <main>
+      <div class="install-section">
+        <a class="install-btn" href="/prun-operator.user.js"
+          >Install Userscript</a
+        >
+        <p class="install-hint">
+          Requires a userscript manager like
+          <a href="https://www.tampermonkey.net/" target="_blank" rel="noopener"
+            >Tampermonkey</a
+          >
+          or
+          <a
+            href="https://violentmonkey.github.io/"
+            target="_blank"
+            rel="noopener"
+            >Violentmonkey</a
+          >.
+        </p>
+      </div>
 
-    <section>
-      <h2>Getting Started</h2>
-      <ol class="steps">
-        <li>Install <a href="https://www.tampermonkey.net/" target="_blank" rel="noopener" style="color:#3b82f6">Tampermonkey</a> or <a href="https://violentmonkey.github.io/" target="_blank" rel="noopener" style="color:#3b82f6">Violentmonkey</a> in your browser.</li>
-        <li>Click the <strong>Install Userscript</strong> button above. The userscript manager will prompt you to confirm.
-          <p style="margin-top:6px; font-size:0.8rem; color:#5a6a7a; line-height:1.5;">If the install prompt doesn't appear, right-click the button and copy the link. Then open your userscript manager's dashboard, click "Create a new script" (or the <code>+</code> tab), paste the copied URL's content into the editor, and save.</p>
-        </li>
-        <li>Open <a href="https://apex.prosperousuniverse.com/" target="_blank" rel="noopener" style="color:#3b82f6">Prosperous Universe</a>. Enhanced controls appear automatically on supported tiles.</li>
-      </ol>
-    </section>
-  </main>
+      <section>
+        <h2>Features</h2>
+        <ul class="feature-list">
+          <li>
+            <div class="feature-icon">&#9998;</div>
+            <div>
+              <strong>Contract Draft Auto-Fill</strong> &mdash; Paste a JSON
+              config and auto-populate template, currency, commodities, prices,
+              and location in one click.
+            </div>
+          </li>
+          <li>
+            <div class="feature-icon">&#9889;</div>
+            <div>
+              <strong>Contract Auto-Fulfill</strong> &mdash; Automatically
+              clicks all available "fulfill" buttons on a contract tile,
+              handling feedback dismissal and errors.
+            </div>
+          </li>
+          <li>
+            <div class="feature-icon">&#128270;</div>
+            <div>
+              <strong>Tile-Aware</strong> &mdash; Automatically detects and
+              enhances relevant tiles as they appear, with no manual setup
+              required.
+            </div>
+          </li>
+        </ul>
+      </section>
 
-  <footer>
-    Built by <a href="https://explorer.auroras.xyz/">ivy_exe</a> &middot; Use at your own risk
-  </footer>
+      <section>
+        <h2>Getting Started</h2>
+        <ol class="steps">
+          <li>
+            Install
+            <a
+              href="https://www.tampermonkey.net/"
+              target="_blank"
+              rel="noopener"
+              style="color: #3b82f6"
+              >Tampermonkey</a
+            >
+            or
+            <a
+              href="https://violentmonkey.github.io/"
+              target="_blank"
+              rel="noopener"
+              style="color: #3b82f6"
+              >Violentmonkey</a
+            >
+            in your browser.
+          </li>
+          <li>
+            Click the <strong>Install Userscript</strong> button above. The
+            userscript manager will prompt you to confirm.
+            <p
+              style="
+                margin-top: 6px;
+                font-size: 0.8rem;
+                color: #5a6a7a;
+                line-height: 1.5;
+              "
+            >
+              If the install prompt doesn't appear, right-click the button and
+              copy the link. Then open your userscript manager's dashboard,
+              click "Create a new script" (or the <code>+</code> tab), paste the
+              copied URL's content into the editor, and save.
+            </p>
+          </li>
+          <li>
+            Open
+            <a
+              href="https://apex.prosperousuniverse.com/"
+              target="_blank"
+              rel="noopener"
+              style="color: #3b82f6"
+              >Prosperous Universe</a
+            >. Enhanced controls appear automatically on supported tiles.
+          </li>
+        </ol>
+      </section>
+    </main>
 
-</body>
+    <footer>
+      Built by <a href="https://explorer.auroras.xyz/">ivy_exe</a> &middot; Use
+      at your own risk
+    </footer>
+  </body>
 </html>

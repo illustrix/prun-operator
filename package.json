@@ -1,0 +1,25 @@
+{
+  "name": "prun-operator",
+  "module": "index.ts",
+  "type": "module",
+  "version": "2026-04-05",
+  "description": "An automation tool for Prosperous Universe, providing features like auto-filling contract drafts and auto-fulfilling contracts. Use at your own risk.",
+  "author": "ivy_exe",
+  "license": "MIT",
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.10",
+    "@illustrix/shared-configs": "^1.0.0",
+    "@types/bun": "latest",
+    "rxjs": "^7.8.2",
+    "vite": "^8.0.3",
+    "vite-plugin-monkey": "^7.1.9"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
+  }
+}

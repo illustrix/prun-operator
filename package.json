@@ -17,7 +17,8 @@
     "@types/bun": "latest",
     "rxjs": "^7.8.2",
     "vite": "^8.0.3",
-    "vite-plugin-monkey": "^7.1.9"
+    "vite-plugin-monkey": "^7.1.9",
+    "wrangler": "^4.80.0"
   },
   "peerDependencies": {
     "typescript": "^5"

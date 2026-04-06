@@ -1,9 +1,9 @@
 import * as Rx from 'rxjs'
 import { assert } from '../utils/assert'
 import { STR } from '../utils/constants'
-import { getAddressCode } from '../utils/game'
+import { getStationCodeFromName } from '../utils/game'
 import { getElementWithText } from '../utils/selector'
-import { simulateClick } from '../utils/simulate'
+import { simulateClick, simulateDrag } from '../utils/simulate'
 import { sleep, waitFor } from '../utils/sleep'
 import {
   $tile,
@@ -14,7 +14,7 @@ import {
 } from '../utils/tile'
 
 export class AutoFuel {
-  originElement?: Element | null
+  locationElement?: Element | null
   fuelField?: Element | null
 
   constructor(private tile: Element) {}
@@ -27,8 +27,8 @@ export class AutoFuel {
     for (const field of fields) {
       const label = field.querySelector('label')
       if (label) {
-        if (STR.ORIGIN.includes(label.textContent.trim())) {
-          this.originElement = field.querySelector('[class*="Link__link"]')
+        if (STR.LOCATION.includes(label.textContent.trim())) {
+          this.locationElement = field.querySelector('[class*="Link__link"]')
         } else if (STR.FUEL.includes(label.textContent.trim())) {
           this.fuelField = field.querySelector(
             '[class*="FormComponent__input"]',
@@ -38,7 +38,7 @@ export class AutoFuel {
     }
 
     assert(this.fuelField, 'Fuel field not found')
-    assert(this.originElement, 'Origin element not found')
+    assert(this.locationElement, 'Location element not found')
 
     const autoRefuelButton = document.createElement('button')
     autoRefuelButton.textContent = 'Auto Fuel'
@@ -63,7 +63,7 @@ export class AutoFuel {
       '[class*="ShipFuel__container"]',
     )
     assert(fuelContainer, 'Fuel container not found')
-
+    await sleep(100)
     simulateClick(fuelContainer)
 
     const shipFuelTile = await Rx.firstValueFrom(
@@ -74,26 +74,28 @@ export class AutoFuel {
       ),
     )
     console.log('Auto fuel: Ship fuel tile opened')
-    assert(this.originElement, 'Origin element not found')
-    simulateClick(this.originElement)
+    assert(this.locationElement, 'Location element not found')
+    await sleep(100)
+    simulateClick(this.locationElement)
 
-    const addressCode = getAddressCode(this.originElement.textContent.trim())
-    assert(addressCode, 'Address code not found in origin element')
+    const stationName = this.locationElement.textContent.trim()
+    const stationCode = getStationCodeFromName(stationName)
 
-    const originTile = await waitForTileCmd(`PLI ${addressCode}`)
+    const stationTile = await waitForTileCmd(`STNS ${stationCode}`)
 
-    console.log('Auto fuel: Origin tile opened')
+    console.log('Auto fuel: Station tile opened')
     const warehouseButton = await waitFor(() =>
       getElementWithText(
-        originTile,
+        stationTile,
         'span[class*="Link__link"]',
         STR.WAREHOUSE,
       ),
     )
     assert(warehouseButton, 'Warehouse button not found in origin tile')
+    await sleep(100)
     simulateClick(warehouseButton)
 
-    const warehouseTile = await waitForTileCmd(`WAR ${addressCode}`)
+    const warehouseTile = await waitForTileCmd(`WAR ${stationCode}`)
 
     console.log('Auto fuel: Warehouse tile opened')
     const autoStoreButton = await waitFor(() =>
@@ -104,20 +106,79 @@ export class AutoFuel {
       ),
     )
     assert(autoStoreButton, 'Auto store button not found in warehouse tile')
+    await sleep(100)
     simulateClick(autoStoreButton)
 
     const inventoryTile = await waitForTile(tile => {
       const cmd = getTileCmd(tile)
-      return cmd.startsWith('INV') && tile.innerHTML.includes(addressCode)
+      return cmd.startsWith('INV') && tile.innerHTML.includes(stationName)
     })
 
     console.log('Auto fuel: Inventory tile opened')
 
-    await sleep(1000) // FIXME: move fuel
+    await sleep(100)
 
-    closeTile(originTile)
+    const shipFuelColumn = shipFuelTile.querySelectorAll(
+      '[class*="ShipFuelInventory__column"]',
+    )
+
+    for (const column of shipFuelColumn) {
+      const materialContainer = column.querySelector(
+        '[class*="MaterialIcon__container"]',
+      )
+      if (!materialContainer) continue
+      const materialNameLabel = materialContainer.querySelector(
+        '[class*="ColoredIcon__label"]',
+      )
+      if (!materialNameLabel) continue
+      const materialName = materialNameLabel.textContent.trim()
+      const indicator = materialContainer.querySelector(
+        '[class*="MaterialIcon__indicator"]',
+      )
+      if (!indicator) continue
+      const indicatorText = indicator.textContent.trim()
+      const [currentStr, maxStr] = indicatorText.split('/')
+      if (!currentStr || !maxStr) continue
+      if (currentStr === maxStr) continue // already full
+
+      const source = getElementWithText(
+        inventoryTile,
+        '[class*="MaterialIcon__container"]',
+        [materialName],
+      )
+      if (!source) {
+        console.warn(
+          `Material ${materialName} not found in inventory, skipping`,
+        )
+        continue
+      }
+      const { drop, end } = simulateDrag(source)
+      await sleep(100)
+      const target = getElementWithText(
+        column,
+        '[class*="DropTargetView__item"]',
+        STR.MAX,
+      )
+      if (target) {
+        drop(target)
+        await sleep(100)
+      } else {
+        end()
+        console.warn(
+          `Max button not found for material ${materialName}, skipping`,
+        )
+      }
+    }
+
+    await sleep(100)
+
+    closeTile(stationTile)
+    await sleep(50)
     closeTile(warehouseTile)
+    await sleep(50)
     closeTile(inventoryTile)
+    await sleep(50)
     closeTile(shipFuelTile)
+    await sleep(50)
   }
 }

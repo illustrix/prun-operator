@@ -22,4 +22,11 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rolldownOptions: {
+      output: {
+        minify: true,
+      },
+    },
+  },
 })

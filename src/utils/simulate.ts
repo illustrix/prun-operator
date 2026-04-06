@@ -38,3 +38,33 @@ export function simulateSelect(el: HTMLSelectElement, value: string) {
 export function simulateClick(el: Element) {
   el.dispatchEvent(new MouseEvent('click', { bubbles: true }))
 }
+
+export function simulateDrag(source: Element) {
+  const dataTransfer = new DataTransfer()
+
+  source.dispatchEvent(
+    new DragEvent('dragstart', { bubbles: true, dataTransfer }),
+  )
+
+  return {
+    drop(target: Element) {
+      target.dispatchEvent(
+        new DragEvent('dragenter', { bubbles: true, dataTransfer }),
+      )
+      target.dispatchEvent(
+        new DragEvent('dragover', { bubbles: true, dataTransfer }),
+      )
+      target.dispatchEvent(
+        new DragEvent('drop', { bubbles: true, dataTransfer }),
+      )
+      source.dispatchEvent(
+        new DragEvent('dragend', { bubbles: true, dataTransfer }),
+      )
+    },
+    end() {
+      source.dispatchEvent(
+        new DragEvent('dragend', { bubbles: true, dataTransfer }),
+      )
+    },
+  }
+}

@@ -6,8 +6,9 @@ export const STR = {
   ADD_COMMODITY: ['add commodity'],
   APPLY_TEMPLATE: ['apply template'],
   SAVE: ['save'],
-  ORIGIN: ['Origin'],
+  LOCATION: ['Location'],
   FUEL: ['Fuel'],
   WAREHOUSE: ['Warehouse'],
   OPEN_STORE: ['open store'],
+  MAX: ['MAX'],
 }

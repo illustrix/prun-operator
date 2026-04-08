@@ -4,7 +4,7 @@ import { enhanceContractTile } from './contract-tile'
 import { enhanceFlightControlTile } from './flight-control-tile'
 
 const tileMap: Record<string, (tile: Element) => void> = {
-  CONDT: enhanceContractDraftTile,
+  CONTD: enhanceContractDraftTile,
   CONT: enhanceContractTile,
   SFC: enhanceFlightControlTile,
 }

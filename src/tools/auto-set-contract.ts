@@ -8,15 +8,17 @@ import {
 import { simulateClick, simulateInput, simulateSelect } from '../utils/simulate'
 import { sleep } from '../utils/sleep'
 
-interface AutoSetContractConfig {
+export interface ContractItem {
+  commodity: string
+  amount: number
+  price: number
+}
+
+export interface AutoSetContractConfig {
   template: string
   currency: string
   location: string
-  items: {
-    commodity: string
-    amount: number
-    price: number
-  }[]
+  items: ContractItem[]
 }
 
 export async function autoSetContract(
@@ -105,15 +107,15 @@ export async function autoSetContract(
   assert(locationResult, 'Location result item not found')
   simulateClick(locationResult)
 
-  await sleep(50)
-  const applyButton = getButtonWithText(tile, STR.APPLY_TEMPLATE)
-  assert(applyButton, 'Apply Template button not found')
-  applyButton.click()
-  await sleep(200)
+  // await sleep(50)
+  // const applyButton = getButtonWithText(tile, STR.APPLY_TEMPLATE)
+  // assert(applyButton, 'Apply Template button not found')
+  // applyButton.click()
+  // await sleep(200)
 
-  const actionField = tile.querySelectorAll('div[class*="Draft__form"')
-  assert(actionField[1], 'Action field not found')
-  const saveButton = getButtonWithText(actionField[1], STR.SAVE)
-  assert(saveButton, 'Save button not found')
-  saveButton.click()
+  // const actionField = tile.querySelectorAll('div[class*="Draft__form"')
+  // assert(actionField[1], 'Action field not found')
+  // const saveButton = getButtonWithText(actionField[1], STR.SAVE)
+  // assert(saveButton, 'Save button not found')
+  // saveButton.click()
 }

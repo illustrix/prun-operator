@@ -2,11 +2,13 @@ import { $tile, getTileCmd } from '../utils/tile'
 import { enhanceContractDraftTile } from './contract-draft-tile'
 import { enhanceContractTile } from './contract-tile'
 import { enhanceFlightControlTile } from './flight-control-tile'
+import { enhanceInventoryTile } from './inventory-tile'
 
 const tileMap: Record<string, (tile: Element) => void> = {
   CONTD: enhanceContractDraftTile,
   CONT: enhanceContractTile,
   SFC: enhanceFlightControlTile,
+  INV: enhanceInventoryTile,
 }
 
 function getTileEnhanceMethod(tile: Element) {

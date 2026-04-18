@@ -1,122 +1,92 @@
-import { render } from 'preact'
-import * as hooks from 'preact/hooks'
+import { type FC, type ReactNode, useState } from 'react'
 import { assert } from '../utils/assert'
 import { STR } from '../utils/constants'
 import { getAddressCode } from '../utils/game'
 import type { AutoSetContractConfig, ContractItem } from './auto-set-contract'
+import { useTool } from './base/context'
+import { Tool } from './base/tool'
 
-export class CopySellContractTool {
+const CopyButton: FC<{
+  getItems: () => ContractItem[]
+  title: string
+  bgColor: string
+}> = ({ getItems, title, bgColor }) => {
+  const tool = useTool<CopySellContractTool>()
+  const [ok, setOk] = useState(NaN)
+  const [error, setError] = useState<string>()
+
+  return (
+    <button
+      type="button"
+      style={{
+        marginLeft: 10,
+        padding: '2px 6px',
+        backgroundColor: error ? '#dc3545' : bgColor,
+        color: 'white',
+        border: 'none',
+        borderRadius: 4,
+        cursor: 'pointer',
+      }}
+      onClick={async () => {
+        try {
+          const items = getItems()
+          await tool.copyContract(items)
+          setOk(items.length)
+        } catch (err: unknown) {
+          console.error('Copy sell contract failed', err)
+          if (err instanceof Error) {
+            setError(err.message)
+          }
+        } finally {
+          setTimeout(() => {
+            setOk(NaN)
+            setError(undefined)
+          }, 2000)
+        }
+      }}
+    >
+      {error ? `Copy Failed: ${error}` : ok ? `Copied ${ok} items!` : title}
+    </button>
+  )
+}
+
+export class CopySellContractTool extends Tool {
   protected copyButton?: HTMLButtonElement
   protected copySelectedButton?: HTMLButtonElement
   protected location?: string
+  protected locationLabel?: Element
 
-  constructor(private tile: Element) {}
-
-  buttonA() {
-    const [ok, setOk] = hooks.useState(NaN)
-    const [error, setError] = hooks.useState<string>()
-
-    return (
-      <button
-        type="button"
-        style={{
-          marginLeft: 10,
-          padding: '2px 6px',
-          backgroundColor: error ? '#dc3545' : '#28a745',
-          color: 'white',
-          border: 'none',
-          borderRadius: 4,
-          cursor: 'pointer',
-        }}
-        onClick={async () => {
-          try {
-            const items = this.getContractItems()
-            await this.copyContract(items)
-            setOk(items.length)
-          } catch (err: unknown) {
-            console.error('Copy sell contract failed', err)
-            if (err instanceof Error) {
-              setError(err.message)
-            }
-          } finally {
-            setTimeout(() => {
-              setOk(NaN)
-              setError(undefined)
-            }, 2000)
-          }
-        }}
-      >
-        {error
-          ? `Copy Failed: ${error}`
-          : ok
-            ? `Copied ${ok} items!`
-            : 'Copy Sell Contract'}
-      </button>
-    )
-  }
-
-  buttonB() {
-    const [ok, setOk] = hooks.useState(NaN)
-    const [error, setError] = hooks.useState<string>()
-
-    return (
-      <button
-        type="button"
-        style={{
-          marginLeft: 10,
-          padding: '2px 6px',
-          backgroundColor: error ? '#dc3545' : '#17a2b8',
-          color: 'white',
-          border: 'none',
-          borderRadius: 4,
-          cursor: 'pointer',
-        }}
-        onClick={async () => {
-          try {
-            const items = this.getSelectedContractItems()
-            await this.copyContract(items)
-            setOk(items.length)
-          } catch (err: unknown) {
-            console.error('Copy selected contract failed', err)
-            if (err instanceof Error) {
-              setError(err.message)
-            }
-          } finally {
-            setTimeout(() => {
-              setOk(NaN)
-              setError(undefined)
-            }, 2000)
-          }
-        }}
-      >
-        {error
-          ? `Copy Failed: ${error}`
-          : ok
-            ? `Copied ${ok} items!`
-            : 'Copy Selected'}
-      </button>
-    )
-  }
-
-  attach() {
+  override match(): boolean {
     const locationLabel = this.tile.querySelector(
       '[class*="StoreView__capacity"]',
     )
-    if (!locationLabel) return
+    if (!locationLabel) return false
     const location = getAddressCode(locationLabel.textContent.trim())
-    if (!location) return
+    if (!location) return false
+    this.locationLabel = locationLabel
     this.location = location
-    const el = document.createElement('div')
-    const ButtonA = this.buttonA.bind(this)
-    const ButtonB = this.buttonB.bind(this)
-    render(
+    return true
+  }
+
+  override getContainer() {
+    return this.locationLabel?.parentNode as Element
+  }
+
+  override render(): ReactNode {
+    return (
       <div>
-        <ButtonA />
-        <ButtonB />
-      </div>,
-      el,
+        <CopyButton
+          getItems={() => this.getContractItems()}
+          title="Copy Sell Contract"
+          bgColor="#28a745"
+        />
+        <CopyButton
+          getItems={() => this.getSelectedContractItems()}
+          title="Copy Selected"
+          bgColor="#17a2b8"
+        />
+      </div>
     )
-    locationLabel.parentNode?.appendChild(el)
   }
 
   protected getContractItem(item: Element): ContractItem {

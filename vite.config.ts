@@ -1,13 +1,15 @@
 import { readFileSync } from 'node:fs'
-import preact from '@preact/preset-vite'
+import babel from '@rolldown/plugin-babel'
+import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import monkey, { cdn } from 'vite-plugin-monkey'
 import pkg from './package.json' with { type: 'json' }
 
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [
-    preact(),
+    react(),
+    babel({ presets: [reactCompilerPreset()] }),
     {
       name: 'html-version',
       generateBundle() {
@@ -32,7 +34,6 @@ export default defineConfig({
       build: {
         externalGlobals: {
           rxjs: cdn.unpkg('rxjs', 'dist/bundles/rxjs.umd.min.js'),
-          preact: cdn.unpkg('preact', 'dist/preact.min.js'),
         },
       },
     }),
@@ -40,8 +41,8 @@ export default defineConfig({
   build: {
     rolldownOptions: {
       output: {
-        minify: true,
+        minify: mode === 'production',
       },
     },
   },
-})
+}))

@@ -268,7 +268,7 @@ export class BurnAuto extends Tool {
     const cmd = getTileCmd(this.tile)
     const address = cmd.split(' ').pop()
     if (!address) return false
-    const addressCode = getAddressCode(address)
+    const addressCode = getAddressCode(address, true)
     if (!addressCode) return false
     this.address = addressCode
     return true

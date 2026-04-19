@@ -41,10 +41,12 @@ const isTool = (obj: unknown): obj is Class<Tool> => {
 const attachTool = (tool: Tool, tile: Element) => {
   if (!tool.match()) {
     console.log('tool match failed', tile, tool)
+    return
   }
   const ok = tool.attach()
   if (!ok) {
     console.log('tool attach failed', tile, tool)
+    return
   }
   toolMaps.set(tile, tool)
 }

@@ -287,7 +287,6 @@ export class BurnAuto extends Tool {
       container => {
         this.container = container
         super.attach()
-        this.rootElement?.style.setProperty('flex', '1')
         this.rootElement?.style.setProperty('display', 'flex')
         this.rootElement?.style.setProperty('justify-content', 'flex-end')
       },

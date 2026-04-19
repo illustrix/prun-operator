@@ -74,7 +74,7 @@ async function processTile(tile: Element) {
 }
 
 export function scanTiles() {
-  document.querySelectorAll('[class*="Tile__tile"]').forEach(processTile)
+  document.querySelectorAll('[class*="TileFrame__frame"]').forEach(processTile)
 
   for (const [tile, tool] of toolMaps) {
     if (!document.contains(tile)) {

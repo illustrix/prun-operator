@@ -18,7 +18,7 @@ const tileMap: Record<string, TileEnhanceMethod | Class<Tool>> = {
 }
 
 function getTileEnhanceMethod(tile: Element) {
-  const tileCmd = getTileCmd(tile)
+  const tileCmd = getTileCmd(tile).toUpperCase()
   for (const cmd in tileMap) {
     if (cmd === tileCmd || tileCmd.startsWith(`${cmd} `)) {
       return tileMap[cmd]

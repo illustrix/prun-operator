@@ -12,4 +12,5 @@ export const STR = {
   OPEN_STORE: ['open store'],
   MAX: ['MAX'],
   OUTPUTS: ['Outputs'],
+  ACT: ['ACT'],
 }

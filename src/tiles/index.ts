@@ -2,6 +2,7 @@ import type { Class } from 'type-fest'
 import type { Tool } from '../tools/base/tool'
 import { BurnAuto } from '../tools/burn-auto'
 import { CopySellContractTool } from '../tools/copy-sell-contract'
+import { XitAutoTool } from '../tools/xit-auto'
 import { $tile, getTileCmd } from '../utils/tile'
 import { enhanceContractDraftTile } from './contract-draft-tile'
 import { enhanceContractTile } from './contract-tile'
@@ -15,12 +16,16 @@ const tileMap: Record<string, TileEnhanceMethod | Class<Tool>> = {
   SFC: enhanceFlightControlTile,
   INV: CopySellContractTool,
   'XIT BURN': BurnAuto,
+  'XIT ACT_': XitAutoTool,
 }
 
 function getTileEnhanceMethod(tile: Element) {
   const tileCmd = getTileCmd(tile).toUpperCase()
   for (const cmd in tileMap) {
-    if (cmd === tileCmd || tileCmd.startsWith(`${cmd} `)) {
+    const match = cmd.endsWith('_')
+      ? tileCmd.startsWith(cmd.slice(0, -1)) // support cmd with variable suffix, like "XIT ACT_12345"
+      : cmd === tileCmd || tileCmd.startsWith(`${cmd} `)
+    if (match) {
       return tileMap[cmd]
     }
   }

@@ -1,129 +1,23 @@
-import { type CSSProperties, type FC, useState } from 'react'
-import { Modal } from '../../components/Modal'
 import { waitForElement } from '../../utils/selector'
-import { useTool } from '../base/context'
+import { getAllTiles } from '../../utils/tile'
 import { Tool } from '../base/tool'
+import {
+  getBurnAddress,
+  hasLowSupply,
+  hasSurplusOutput,
+  maxOutputDays,
+  minSupplyDays,
+  parseBurnTable,
+} from '../burn-auto/parse'
+import { SngModal } from './SngModal'
 
 export interface SngBase {
   address: string
   name?: string
   needsSupply: boolean
   needsSubmit: boolean
-}
-
-const triggerButtonStyle: CSSProperties = {
-  padding: '2px 8px',
-  backgroundColor: '#2563eb',
-  color: 'white',
-  border: 'none',
-  borderRadius: 4,
-  cursor: 'pointer',
-}
-
-const tableStyle: CSSProperties = {
-  width: '100%',
-  borderCollapse: 'collapse',
-  fontSize: 12,
-}
-
-const thStyle: CSSProperties = {
-  textAlign: 'left',
-  padding: '4px 8px',
-  borderBottom: '1px solid #374151',
-  color: '#9ca3af',
-  fontWeight: 500,
-}
-
-const tdStyle: CSSProperties = {
-  padding: '6px 8px',
-  borderBottom: '1px solid #1f2937',
-}
-
-const badgeBase: CSSProperties = {
-  display: 'inline-block',
-  padding: '1px 8px',
-  borderRadius: 999,
-  fontSize: 11,
-  fontWeight: 600,
-}
-
-const okBadge: CSSProperties = {
-  ...badgeBase,
-  color: '#34d399',
-  backgroundColor: '#064e3b',
-}
-
-const warnBadge: CSSProperties = {
-  ...badgeBase,
-  color: '#fbbf24',
-  backgroundColor: '#78350f',
-}
-
-const StatusBadge: FC<{ flag: boolean; warn: string; ok: string }> = ({
-  flag,
-  warn,
-  ok,
-}) => <span style={flag ? warnBadge : okBadge}>{flag ? warn : ok}</span>
-
-const SngModal: FC = () => {
-  const tool = useTool<SngAutoTool>()
-  const [open, setOpen] = useState(false)
-  const [bases, setBases] = useState<SngBase[]>([])
-
-  return (
-    <>
-      <button
-        type="button"
-        style={triggerButtonStyle}
-        onClick={() => {
-          setBases(tool.collectBases())
-          setOpen(true)
-        }}
-      >
-        SNG Auto
-      </button>
-      <Modal open={open} onClose={() => setOpen(false)} title="SNG Bases">
-        <table style={tableStyle}>
-          <thead>
-            <tr>
-              <th style={thStyle}>Base</th>
-              <th style={thStyle}>Supply</th>
-              <th style={thStyle}>Submit</th>
-            </tr>
-          </thead>
-          <tbody>
-            {bases.length === 0 ? (
-              <tr>
-                <td style={{ ...tdStyle, color: '#9ca3af' }} colSpan={3}>
-                  No SNG bases detected.
-                </td>
-              </tr>
-            ) : (
-              bases.map(b => (
-                <tr key={b.address}>
-                  <td style={tdStyle}>{b.name ?? b.address}</td>
-                  <td style={tdStyle}>
-                    <StatusBadge
-                      flag={b.needsSupply}
-                      warn="Need Supply"
-                      ok="OK"
-                    />
-                  </td>
-                  <td style={tdStyle}>
-                    <StatusBadge
-                      flag={b.needsSubmit}
-                      warn="Need Submit"
-                      ok="OK"
-                    />
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </Modal>
-    </>
-  )
+  supplyDays: number | null
+  outputDays: number | null
 }
 
 export class SngAutoTool extends Tool {
@@ -138,8 +32,31 @@ export class SngAutoTool extends Tool {
   }
 
   collectBases(): SngBase[] {
-    // TODO: enumerate connected SNG bases from the CONTD tile and derive
-    // their supply / submission status.
-    return []
+    const bases: SngBase[] = []
+    for (const tile of getAllTiles()) {
+      if (!tile.cmd.toUpperCase().startsWith('XIT BURN ')) continue
+      const address = getBurnAddress(tile)
+      if (!address) continue
+      const rows = parseBurnTable(tile)
+      bases.push({
+        address,
+        name: tile.title.split('-').pop()?.trim() || undefined,
+        needsSupply: hasLowSupply(rows),
+        needsSubmit: hasSurplusOutput(rows),
+        supplyDays: minSupplyDays(rows),
+        outputDays: maxOutputDays(rows),
+      })
+    }
+    return bases
+  }
+
+  async autoSupply(base: SngBase): Promise<void> {
+    // TODO: drive the supply flow (open draft, fill, submit, etc.)
+    console.log('SngAutoTool.autoSupply', base)
+  }
+
+  async autoSubmit(base: SngBase): Promise<void> {
+    // TODO: drive the submit flow (export surplus output as sell contract)
+    console.log('SngAutoTool.autoSubmit', base)
   }
 }

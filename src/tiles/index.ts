@@ -4,7 +4,7 @@ import { BurnAuto } from '../tools/burn-auto'
 import { CopySellContractTool } from '../tools/copy-sell-contract'
 import { SngAutoTool } from '../tools/sng-auto'
 import { XitAutoTool } from '../tools/xit-auto'
-import { $tile, Tile } from '../utils/tile'
+import { $allTiles, $tile, Tile } from '../utils/tile'
 import { enhanceContractDraftTile } from './contract-draft-tile'
 import { enhanceContractTile } from './contract-tile'
 import { enhanceFlightControlTile } from './flight-control-tile'
@@ -99,10 +99,16 @@ async function processTile(tile: Tile) {
   tile.el.setAttribute(PROCESSED_ATTR, 'true')
 }
 
-export function scanTiles() {
-  document.querySelectorAll('[class*="TileFrame__frame"]').forEach(el => {
-    processTile(new Tile(el))
-  })
+function scanAndHandleTiles() {
+  const allTiles = [
+    ...document.querySelectorAll('[class*="TileFrame__frame"]'),
+  ].map(el => new Tile(el))
+
+  for (const tile of allTiles) {
+    processTile(tile)
+  }
+
+  $allTiles.next(allTiles)
 
   for (const [tile, tool] of toolMaps) {
     if (!document.contains(tile.el)) {
@@ -110,4 +116,13 @@ export function scanTiles() {
       toolMaps.delete(tile)
     }
   }
+}
+
+export const init = () => {
+  const observer = new MutationObserver(scanAndHandleTiles)
+  observer.observe(document.body, { childList: true, subtree: true })
+
+  scanAndHandleTiles()
+
+  console.log('PrUn Operator loaded')
 }

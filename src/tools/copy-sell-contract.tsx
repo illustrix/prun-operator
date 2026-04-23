@@ -5,6 +5,7 @@ import { getAddressCode } from '../utils/game'
 import type { AutoSetContractConfig, ContractItem } from './auto-set-contract'
 import { useTool } from './base/context'
 import { Tool } from './base/tool'
+import styles from './copy-sell-contract.module.css'
 
 const CopyButton: FC<{
   getItems: () => ContractItem[]
@@ -18,15 +19,8 @@ const CopyButton: FC<{
   return (
     <button
       type="button"
-      style={{
-        marginLeft: 10,
-        padding: '2px 6px',
-        backgroundColor: error ? '#dc3545' : bgColor,
-        color: 'white',
-        border: 'none',
-        borderRadius: 4,
-        cursor: 'pointer',
-      }}
+      className={styles.button}
+      style={{ backgroundColor: error ? '#dc3545' : bgColor }}
       onClick={async () => {
         try {
           const items = getItems()

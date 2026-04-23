@@ -1,0 +1,109 @@
+.trigger {
+  padding: 2px 8px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.description {
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  background-color: #111827;
+  border: 1px solid #1f2937;
+  border-radius: 4px;
+  color: #9ca3af;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.description p {
+  margin: 0;
+}
+
+.description p + p {
+  margin-top: 4px;
+}
+
+.description strong {
+  color: #e5e7eb;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.th {
+  text-align: left;
+  padding: 4px 8px;
+  border-bottom: 1px solid #374151;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
+.td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #1f2937;
+}
+
+.emptyCell {
+  padding: 6px 8px;
+  border-bottom: 1px solid #1f2937;
+  color: #9ca3af;
+}
+
+.action {
+  padding: 2px 10px;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  color: white;
+  min-width: 90px;
+}
+
+.address {
+  margin-left: 6px;
+  color: #9ca3af;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.days {
+  font-variant-numeric: tabular-nums;
+  color: #e5e7eb;
+}
+
+.daysMuted {
+  color: #4b5563;
+}
+
+.daysSeparator {
+  color: #4b5563;
+  margin: 0 4px;
+}
+
+.action:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.actionOk {
+  background-color: #047857;
+}
+
+.actionOk:hover:not(:disabled) {
+  background-color: #059669;
+}
+
+.actionWarn {
+  background-color: #b45309;
+}
+
+.actionWarn:hover:not(:disabled) {
+  background-color: #d97706;
+}

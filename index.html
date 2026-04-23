@@ -65,6 +65,45 @@
         background: #0d1b2a;
       }
 
+.testing-section {
+        margin-top: 32px;
+        padding: 16px 20px;
+        border: 1px dashed #2a3548;
+        border-radius: 6px;
+        background: #0f1722;
+      }
+
+      .testing-section h2 {
+        font-size: 1rem;
+        color: #9ca3af;
+        border-bottom: none;
+        padding-bottom: 0;
+        margin-bottom: 10px;
+      }
+
+      .testing-section p {
+        font-size: 0.85rem;
+        color: #6b7280;
+        line-height: 1.6;
+        margin-bottom: 12px;
+      }
+
+      .testing-install-link {
+        display: inline-block;
+        padding: 6px 14px;
+        font-size: 0.85rem;
+        color: #9ca3af;
+        background: #1a2332;
+        border: 1px solid #2a3548;
+        border-radius: 6px;
+        text-decoration: none;
+      }
+
+      .testing-install-link:hover {
+        color: #e5e7eb;
+        border-color: #4b5563;
+      }
+
       main {
         width: 100%;
         max-width: 640px;
@@ -235,7 +274,11 @@
 
     <main>
       <div class="install-section">
-        <a class="install-btn" href="/prun-operator.user.js"
+        <a
+          class="install-btn"
+          href="https://prop.auroras.xyz/prun-operator.user.js"
+          target="_blank"
+          rel="noopener"
           >Install Userscript</a
         >
         <p class="install-hint">
@@ -366,6 +409,23 @@
             >. Enhanced controls appear automatically on supported tiles.
           </li>
         </ol>
+      </section>
+
+      <section class="testing-section">
+        <h2>Testing Build</h2>
+        <p>
+          Prefer living on the edge? The testing build ships new features
+          first — before they reach the stable channel. It may contain bugs,
+          half-finished work, or changes that get rolled back. Use at your
+          own risk, and please report anything that looks off.
+        </p>
+        <a
+          class="testing-install-link"
+          href="https://prop-testing.auroras.xyz/prun-operator.user.js"
+          target="_blank"
+          rel="noopener"
+          >Install testing build</a
+        >
       </section>
     </main>
 

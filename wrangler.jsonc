@@ -8,5 +8,15 @@
   "assets": {
     "directory": "dist"
   },
-  "compatibility_flags": ["nodejs_compat"]
+  "compatibility_flags": ["nodejs_compat"],
+  "env": {
+    "staging": {
+      "routes": [
+        { "pattern": "prop-testing.auroras.xyz", "custom_domain": true }
+      ]
+    },
+    "production": {
+      "routes": [{ "pattern": "prop.auroras.xyz", "custom_domain": true }]
+    }
+  }
 }

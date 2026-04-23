@@ -128,3 +128,11 @@
 .actionWarn:hover:not(:disabled) {
   background-color: #d97706;
 }
+
+.actionInProgress {
+  background-color: #0e7490;
+}
+
+.actionInProgress:hover:not(:disabled) {
+  background-color: #0891b2;
+}

@@ -3,6 +3,7 @@ import { assert } from '../../utils/assert'
 import { STR } from '../../utils/constants'
 import { getElementWithText, waitForElement } from '../../utils/selector'
 import { simulateClick } from '../../utils/simulate'
+import { waitFor } from '../../utils/sleep'
 import { getAllTiles, type Tile, waitForTile } from '../../utils/tile'
 import {
   type AutoSetContractConfig,
@@ -38,13 +39,18 @@ export interface SngBase {
   needsSubmit: boolean
   supplyDays: number | null
   outputDays: number | null
+  existingSupply?: ExistingContract
+  existingSubmit?: ExistingContract
+}
+
+export interface ExistingContract {
+  name: string
+  partner: string
 }
 
 const findBurnTile = (address: string): Tile | undefined => {
   return getAllTiles().find(
-    t =>
-      t.cmd.toUpperCase().startsWith('XIT BURN ') &&
-      getBurnAddress(t) === address,
+    t => t.matchCmd('^XIT BURN ') && getBurnAddress(t) === address,
   )
 }
 
@@ -61,7 +67,7 @@ const draftNamePrefix = (
 }
 
 const waitForDraftTile = (): Promise<Tile> =>
-  waitForTile(t => t.cmd.toUpperCase().startsWith('CONTD '))
+  waitForTile(t => t.matchCmd('^CONTD '))
 
 export class SngAutoTool extends Tool {
   // emits the current step label while an action is running; null when
@@ -76,13 +82,64 @@ export class SngAutoTool extends Tool {
     return <SngModal />
   }
 
+  // Latest snapshot populated by `checkExistingContracts`, consumed by
+  // `collectBases` when annotating each base.
+  protected existingContracts: ExistingContract[] = []
+
+  // Find the target tile among all open tiles, then parse its table.
+  async checkExistingContracts(): Promise<void> {
+    const tile = getAllTiles().find(t => t.matchCmd('^XIT CONTS$'))
+    if (!tile) {
+      console.warn('checkExistingContracts: target tile not found')
+      this.existingContracts = []
+      return
+    }
+    this.existingContracts = this.parseContractsTable(tile)
+  }
+
+  // Parse rows of the XIT CONTS table. Columns are:
+  //   Contract | Item | Partner | Self
+  // Each name cell wraps the text in a `[class*="Link__link"]` div; the
+  // partner cell starts with a `Link__link` (partner name), followed by
+  // per-item condition rows we ignore here.
+  protected parseContractsTable(tile: Tile): ExistingContract[] {
+    const table = tile.el.querySelector('table')
+    if (!table) return []
+    const contracts: ExistingContract[] = []
+    for (const tr of table.querySelectorAll<HTMLTableRowElement>(
+      'tbody > tr',
+    )) {
+      const cellContract = tr.children[0]
+      const cellPartner = tr.children[2]
+      if (!cellContract || !cellPartner) continue
+      const nameEl = cellContract.querySelector('[class*="Link__link"]')
+      const name = (nameEl ?? cellContract).textContent.trim()
+      if (!name) continue
+      const partnerEl = cellPartner.querySelector('[class*="Link__link"]')
+      const partner = partnerEl?.textContent.trim() ?? ''
+      contracts.push({ name, partner })
+    }
+    return contracts
+  }
+
+  // Find an existing contract whose name starts with `prefix`.
+  protected findExistingByPrefix(
+    prefix: string,
+  ): ExistingContract | undefined {
+    const needle = prefix.toLowerCase()
+    return this.existingContracts.find(c =>
+      c.name.toLowerCase().startsWith(needle),
+    )
+  }
+
   collectBases(): SngBase[] {
     const bases: SngBase[] = []
     for (const tile of getAllTiles()) {
-      if (!tile.cmd.toUpperCase().startsWith('XIT BURN ')) continue
+      if (!tile.matchCmd('^XIT BURN ')) continue
       const address = getBurnAddress(tile)
       if (!address) continue
       const rows = parseBurnTable(tile)
+      const addressCode = address.replace(/-/g, '').toUpperCase()
       bases.push({
         address,
         name: tile.title.split('-').pop()?.trim() || undefined,
@@ -90,6 +147,8 @@ export class SngAutoTool extends Tool {
         needsSubmit: hasSurplusOutput(rows),
         supplyDays: minSupplyDays(rows),
         outputDays: maxOutputDays(rows),
+        existingSupply: this.findExistingByPrefix(`SNGP-${addressCode}-`),
+        existingSubmit: this.findExistingByPrefix(`SNGS-${addressCode}-`),
       })
     }
     return bases
@@ -177,12 +236,15 @@ export class SngAutoTool extends Tool {
     return await waitForDraftTile()
   }
 
-  // Click "Create new" on the CONTD list and wait for the resulting
-  // `CONTD <id>` tile to appear.
+  // Click "Create new" on the CONTD list. The button only adds a new
+  // row to the list (it doesn't auto-open), so we poll for the new top
+  // row and then click its View button.
   protected async createNewDraft(
     _base: SngBase,
     _config: AutoSetContractConfig,
   ): Promise<Tile> {
+    const beforeFirst = parseContractDraftTable(this.tile)[0]?.name
+
     const createButton = getElementWithText<HTMLButtonElement>(
       this.tile.el,
       'button',
@@ -191,6 +253,14 @@ export class SngAutoTool extends Tool {
     )
     assert(createButton, 'Create new button not found')
     simulateClick(createButton)
-    return await waitForDraftTile()
+
+    const newDraft = await waitFor(() => {
+      const first = parseContractDraftTable(this.tile)[0]
+      if (!first) return null
+      if (first.name === beforeFirst) return null
+      return first
+    })
+    assert(newDraft, 'New draft row did not appear after Create new')
+    return await this.openDraft(newDraft)
   }
 }

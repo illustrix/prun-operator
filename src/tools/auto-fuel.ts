@@ -108,7 +108,7 @@ export class AutoFuel {
 
     const inventoryTile = await waitForTile(
       tile =>
-        tile.cmd.startsWith('INV') && tile.el.innerHTML.includes(stationName),
+        tile.matchCmd('^INV') && tile.el.innerHTML.includes(stationName),
     )
 
     console.log('Auto fuel: Inventory tile opened')

@@ -33,8 +33,9 @@ const ActionButton: FC<{
   warnLabel: string
   okLabel: string
   hoverLabel: string
+  inProgress?: boolean
   onAction: () => void | Promise<void>
-}> = ({ flag, warnLabel, okLabel, hoverLabel, onAction }) => {
+}> = ({ flag, warnLabel, okLabel, hoverLabel, inProgress, onAction }) => {
   const [busy, setBusy] = useState(false)
   const [hovered, setHovered] = useState(false)
   const label = busy
@@ -44,10 +45,15 @@ const ActionButton: FC<{
       : flag
         ? warnLabel
         : okLabel
+  const colorClass = inProgress
+    ? styles.actionInProgress
+    : flag
+      ? styles.actionWarn
+      : styles.actionOk
   return (
     <button
       type="button"
-      className={`${styles.action} ${flag ? styles.actionWarn : styles.actionOk}`}
+      className={`${styles.action} ${colorClass}`}
       disabled={busy}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -100,6 +106,10 @@ export const SngModal: FC = () => {
         onClick={() => {
           setBases(tool.collectBases())
           setOpen(true)
+          tool
+            .checkExistingContracts()
+            .then(() => setBases(tool.collectBases()))
+            .catch(err => console.error('SNG pre-check failed', err))
         }}
       >
         SNG Auto
@@ -164,18 +174,24 @@ export const SngModal: FC = () => {
                   <td className={styles.td}>
                     <ActionButton
                       flag={b.needsSupply}
-                      warnLabel="Need Supply"
-                      okLabel="OK"
+                      warnLabel={
+                        b.existingSupply ? 'In Progress' : 'Need Supply'
+                      }
+                      okLabel={b.existingSupply ? 'In Progress' : 'OK'}
                       hoverLabel="Auto Supply"
+                      inProgress={!!b.existingSupply}
                       onAction={() => runAction(() => tool.autoSupply(b))}
                     />
                   </td>
                   <td className={styles.td}>
                     <ActionButton
                       flag={b.needsSubmit}
-                      warnLabel="Need Submit"
-                      okLabel="OK"
+                      warnLabel={
+                        b.existingSubmit ? 'In Progress' : 'Need Submit'
+                      }
+                      okLabel={b.existingSubmit ? 'In Progress' : 'OK'}
                       hoverLabel="Auto Submit"
+                      inProgress={!!b.existingSubmit}
                       onAction={() => runAction(() => tool.autoSubmit(b))}
                     />
                   </td>

@@ -21,6 +21,14 @@ export class Tile {
     this.cmd = getTileCmd(this.el)
     this.title = getTileTitle(this.el)
   }
+
+  // Test whether the tile's cmd matches `pattern`. A string is treated
+  // as a regex source with the `i` (case-insensitive) flag; a RegExp
+  // is used as-is so the caller can opt into different flags.
+  matchCmd(pattern: string | RegExp): boolean {
+    const re = pattern instanceof RegExp ? pattern : new RegExp(pattern, 'i')
+    return re.test(this.cmd)
+  }
 }
 
 export const $tile = new Rx.Subject<Tile>()

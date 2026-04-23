@@ -24,13 +24,8 @@ const tileMap: Record<string, TileEnhanceValue> = {
 }
 
 function getTileEnhance(tile: Tile) {
-  const tileCmd = tile.cmd.toUpperCase()
   for (const cmd in tileMap) {
-    const re = new RegExp(cmd, 'i')
-    const match = tileCmd.match(re)
-    if (match) {
-      return tileMap[cmd]
-    }
+    if (tile.matchCmd(cmd)) return tileMap[cmd]
   }
 }
 

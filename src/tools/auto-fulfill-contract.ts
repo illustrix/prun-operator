@@ -1,10 +1,12 @@
+import { awaitActionFeedback } from '../utils/action-feedback'
 import { STR } from '../utils/constants'
-import { getElementWithText, waitForElement } from '../utils/selector'
-import { simulateClick } from '../utils/simulate'
+import { getElementWithText } from '../utils/selector'
 import { sleep } from '../utils/sleep'
 import type { Tile } from '../utils/tile'
 
-export async function autoFulfillContract(tile: Tile) {
+const FULFILL_POLL_DELAY = 100
+
+export async function autoFulfillContract(tile: Tile): Promise<void> {
   while (true) {
     const fulfillButton = getElementWithText<HTMLButtonElement>(
       tile.el,
@@ -12,26 +14,16 @@ export async function autoFulfillContract(tile: Tile) {
       STR.FULFILL,
       true,
     )
-    if (!fulfillButton) {
-      return
-    }
+    if (!fulfillButton) return
+
     fulfillButton.scrollIntoView({ behavior: 'smooth' })
     fulfillButton.click()
-    const dismissEl = await waitForElement(
-      tile.el,
-      'span[class*="ActionFeedback__dismiss"]',
-      5000,
-    )
 
-    if (dismissEl) {
-      const error = tile.el.querySelector('div[class*="ActionFeedback__error"]')
-      if (error) {
-        console.log('Auto fulfill aborted:', error.textContent.trim())
-        return
-      }
-
-      simulateClick(dismissEl)
+    const error = await awaitActionFeedback(tile.el)
+    if (error) {
+      console.log('Auto fulfill aborted:', error)
+      return
     }
-    await sleep(100)
+    await sleep(FULFILL_POLL_DELAY)
   }
 }

@@ -1,4 +1,5 @@
-import { type FC, useState } from 'react'
+import { type FC, useEffect, useState } from 'react'
+import { LoadingOverlay } from '../../components/LoadingOverlay'
 import { Modal } from '../../components/Modal'
 import { useTool } from '../base/context'
 import type { SngAutoTool, SngBase } from './index'
@@ -71,6 +72,25 @@ export const SngModal: FC = () => {
   const [open, setOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [bases, setBases] = useState<SngBase[]>([])
+  const [busy, setBusy] = useState(false)
+  const [step, setStep] = useState<string | null>(null)
+
+  useEffect(() => {
+    const sub = tool.step$.subscribe(setStep)
+    return () => sub.unsubscribe()
+  }, [tool])
+
+  const runAction = async (fn: () => Promise<void>) => {
+    setBusy(true)
+    try {
+      await fn()
+    } catch (err) {
+      console.error('SNG action failed', err)
+    } finally {
+      setBases(tool.collectBases())
+      setBusy(false)
+    }
+  }
 
   return (
     <>
@@ -84,7 +104,12 @@ export const SngModal: FC = () => {
       >
         SNG Auto
       </button>
-      <Modal open={open} onClose={() => setOpen(false)} title="SNG Bases">
+      <Modal
+        open={open}
+        hidden={busy}
+        onClose={() => setOpen(false)}
+        title="SNG Bases"
+      >
         <div className={styles.toolbar}>
           <button
             type="button"
@@ -142,7 +167,7 @@ export const SngModal: FC = () => {
                       warnLabel="Need Supply"
                       okLabel="OK"
                       hoverLabel="Auto Supply"
-                      onAction={() => tool.autoSupply(b)}
+                      onAction={() => runAction(() => tool.autoSupply(b))}
                     />
                   </td>
                   <td className={styles.td}>
@@ -151,7 +176,7 @@ export const SngModal: FC = () => {
                       warnLabel="Need Submit"
                       okLabel="OK"
                       hoverLabel="Auto Submit"
-                      onAction={() => tool.autoSubmit(b)}
+                      onAction={() => runAction(() => tool.autoSubmit(b))}
                     />
                   </td>
                 </tr>
@@ -164,6 +189,10 @@ export const SngModal: FC = () => {
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
       />
+      <LoadingOverlay open={busy} step={step}>
+        <div>Auto executing. Please do not interact with the page.</div>
+        <div>If it seems stuck, refresh the page.</div>
+      </LoadingOverlay>
     </>
   )
 }

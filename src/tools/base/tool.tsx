@@ -14,10 +14,8 @@ export abstract class Tool {
 
   constructor(public tile: Tile) {}
 
-  // throw to skip this tile
-  match() {
-    throw new Error('match method not implemented')
-  }
+  // throw to skip this tile silently
+  match() {}
 
   // where the widget will render. return undefined to skip rendering.
   // may be sync or async.

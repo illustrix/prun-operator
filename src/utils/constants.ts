@@ -6,6 +6,8 @@ export const STR = {
   ADD_COMMODITY: ['add commodity'],
   APPLY_TEMPLATE: ['apply template'],
   SAVE: ['save'],
+  SEND: ['send'],
+  SEND_DRAFT: ['send draft'],
   LOCATION: ['Location'],
   FUEL: ['Fuel'],
   WAREHOUSE: ['Warehouse'],
@@ -13,4 +15,6 @@ export const STR = {
   MAX: ['MAX'],
   OUTPUTS: ['Outputs'],
   ACT: ['ACT'],
+  VIEW: ['View'],
+  CREATE_NEW: ['Create new'],
 }

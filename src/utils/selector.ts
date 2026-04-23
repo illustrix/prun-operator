@@ -28,18 +28,32 @@ export const getButtonWithText = (container: Element, texts: string[]) => {
     | undefined
 }
 
-export const waitForElement = async (
+export async function waitForElement(
+  container: ParentNode,
+  selector: string,
+  timeout?: number,
+): Promise<Element>
+export async function waitForElement(
+  container: ParentNode,
+  selector: string,
+  timeout: number,
+  shouldThrow: false,
+): Promise<Element | undefined>
+export async function waitForElement(
   container: ParentNode,
   selector: string,
   timeout = 5000,
-) => {
+  shouldThrow = true,
+) {
   const startTime = Date.now()
   while (Date.now() - startTime < timeout) {
     const el = container.querySelector(selector)
     if (el) return el
     await sleep(100)
   }
-  throw new Error(`Element ${selector} not found within ${timeout}ms`)
+  if (shouldThrow) {
+    throw new Error(`Element ${selector} not found within ${timeout}ms`)
+  }
 }
 
 export const getParentMatching = (

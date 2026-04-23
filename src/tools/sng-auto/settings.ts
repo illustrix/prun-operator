@@ -1,13 +1,15 @@
 const STORAGE_KEY = 'prun-operator:sng-settings'
 
 export interface SngBaseSettings {
-  currency?: string
   owner?: string
+  currency?: string
 }
 
 export interface SngSettings {
   bases?: Record<string, SngBaseSettings>
   prices?: Record<string, number>
+  defaultOwner?: string
+  defaultCurrency?: string
 }
 
 export const loadSettings = (): SngSettings => {

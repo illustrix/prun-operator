@@ -1,7 +1,11 @@
 import { waitForElement } from '../../utils/selector'
-import { getAllTiles } from '../../utils/tile'
+import { getAllTiles, type Tile } from '../../utils/tile'
+import type { AutoSetContractConfig } from '../auto-set-contract'
 import { Tool } from '../base/tool'
 import {
+  BALANCE_MIN_DAYS,
+  BALANCE_REFILL_DAYS,
+  computeBalanced,
   getBurnAddress,
   hasLowSupply,
   hasSurplusOutput,
@@ -9,7 +13,10 @@ import {
   minSupplyDays,
   parseBurnTable,
 } from '../burn-auto/parse'
+import { loadSettings } from './settings'
 import { SngModal } from './SngModal'
+
+const DEFAULT_CURRENCY = 'ICA'
 
 export interface SngBase {
   address: string
@@ -18,6 +25,14 @@ export interface SngBase {
   needsSubmit: boolean
   supplyDays: number | null
   outputDays: number | null
+}
+
+const findBurnTile = (address: string): Tile | undefined => {
+  return getAllTiles().find(
+    t =>
+      t.cmd.toUpperCase().startsWith('XIT BURN ') &&
+      getBurnAddress(t) === address,
+  )
 }
 
 export class SngAutoTool extends Tool {
@@ -51,8 +66,32 @@ export class SngAutoTool extends Tool {
   }
 
   async autoSupply(base: SngBase): Promise<void> {
-    // TODO: drive the supply flow (open draft, fill, submit, etc.)
-    console.log('SngAutoTool.autoSupply', base)
+    const tile = findBurnTile(base.address)
+    if (!tile) {
+      console.warn('autoSupply: no XIT BURN tile for', base.address)
+      return
+    }
+    const rows = parseBurnTable(tile)
+    const items = computeBalanced(rows, BALANCE_MIN_DAYS, BALANCE_REFILL_DAYS)
+    if (items.length === 0) {
+      console.log('autoSupply: nothing needed for', base.address)
+      return
+    }
+    const settings = loadSettings()
+    const currency =
+      settings.bases?.[base.address]?.currency ?? DEFAULT_CURRENCY
+    const config: AutoSetContractConfig = {
+      template: 'BUY',
+      currency,
+      location: base.address,
+      items: items.map(item => ({
+        commodity: item.ticker,
+        amount: item.amount,
+        price: 1,
+      })),
+    }
+    // TODO: drive the draft / submit flow with `config`
+    console.log('autoSupply: contract config prepared', config)
   }
 
   async autoSubmit(base: SngBase): Promise<void> {

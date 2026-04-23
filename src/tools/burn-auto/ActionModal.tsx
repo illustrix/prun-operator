@@ -2,66 +2,16 @@ import { type FC, useMemo, useState } from 'react'
 import { Modal } from '../../components/Modal'
 import { useTool } from '../base/context'
 import styles from './ActionModal.module.css'
-import type { BurnAuto, BurnRow, NeededItem } from './index'
-
-const BALANCE_MIN_DAYS = 2
-const BALANCE_REFILL_DAYS = 4
+import type { BurnAuto } from './index'
+import {
+  BALANCE_MIN_DAYS,
+  BALANCE_REFILL_DAYS,
+  type BurnRow,
+  computeBalanced,
+  computeNeeded,
+} from './parse'
 
 type Mode = 'fixed' | 'balance'
-
-const computeNeeded = (
-  rows: BurnRow[],
-  days: number,
-  includeInventory: boolean,
-): NeededItem[] => {
-  const items: NeededItem[] = []
-  for (const row of rows) {
-    if (!Number.isFinite(row.burn) || row.burn >= 0) continue
-    const gross = Math.abs(row.burn) * days
-    const amount = includeInventory ? Math.max(0, gross - row.inventory) : gross
-    if (amount <= 0) continue
-    items.push({
-      ticker: row.ticker,
-      inventory: row.inventory,
-      gross,
-      amount: Math.ceil(amount),
-    })
-  }
-  return items
-}
-
-// Balance policy: keep every consumed material between `minDays` and
-// `minDays + refillDays` days of supply.
-//   • days > minDays + refillDays : skip (over-stocked)
-//   • days < minDays               : buy refillDays worth
-//   • otherwise                    : top up to (minDays + refillDays) days
-const computeBalanced = (
-  rows: BurnRow[],
-  minDays: number,
-  refillDays: number,
-): NeededItem[] => {
-  const items: NeededItem[] = []
-  const targetDays = minDays + refillDays
-  for (const row of rows) {
-    if (!Number.isFinite(row.burn) || row.burn >= 0) continue
-    if (!Number.isFinite(row.days)) continue
-    if (row.days > targetDays) continue
-
-    const consumption = -row.burn
-    const amount =
-      row.days < minDays
-        ? refillDays * consumption
-        : targetDays * consumption - row.inventory
-    if (amount <= 0) continue
-    items.push({
-      ticker: row.ticker,
-      inventory: row.inventory,
-      gross: targetDays * consumption,
-      amount: Math.ceil(amount),
-    })
-  }
-  return items
-}
 
 const formatNumber = (n: number): string =>
   n.toLocaleString('en-US', { maximumFractionDigits: 2 })

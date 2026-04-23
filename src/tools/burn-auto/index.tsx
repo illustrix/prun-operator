@@ -4,16 +4,14 @@ import { xitActTemplate } from '../../utils/xit-act'
 import type { AutoSetContractConfig } from '../auto-set-contract'
 import { Tool } from '../base/tool'
 import { ActionModal } from './ActionModal'
-import { type BurnRow, getBurnAddress, parseBurnTable } from './parse'
+import {
+  type BurnRow,
+  getBurnAddress,
+  type NeededItem,
+  parseBurnTable,
+} from './parse'
 
-export type { BurnRow } from './parse'
-
-export interface NeededItem {
-  ticker: string
-  inventory: number
-  gross: number
-  amount: number
-}
+export type { BurnRow, NeededItem } from './parse'
 
 export class BurnAuto extends Tool {
   protected address?: string

@@ -7,6 +7,27 @@
   cursor: pointer;
 }
 
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 8px;
+}
+
+.toolbarBtn {
+  padding: 2px 10px;
+  background-color: #374151;
+  color: #e5e7eb;
+  border: none;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toolbarBtn:hover {
+  background-color: #4b5563;
+}
+
 .description {
   margin-bottom: 12px;
   padding: 10px 12px;

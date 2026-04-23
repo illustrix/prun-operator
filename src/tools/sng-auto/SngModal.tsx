@@ -2,6 +2,7 @@ import { type FC, useState } from 'react'
 import { Modal } from '../../components/Modal'
 import { useTool } from '../base/context'
 import type { SngAutoTool, SngBase } from './index'
+import { SettingsModal } from './SettingsModal'
 import styles from './SngModal.module.css'
 
 const formatDays = (days: number | null): string =>
@@ -30,14 +31,25 @@ const ActionButton: FC<{
   flag: boolean
   warnLabel: string
   okLabel: string
+  hoverLabel: string
   onAction: () => void | Promise<void>
-}> = ({ flag, warnLabel, okLabel, onAction }) => {
+}> = ({ flag, warnLabel, okLabel, hoverLabel, onAction }) => {
   const [busy, setBusy] = useState(false)
+  const [hovered, setHovered] = useState(false)
+  const label = busy
+    ? '…'
+    : hovered
+      ? hoverLabel
+      : flag
+        ? warnLabel
+        : okLabel
   return (
     <button
       type="button"
       className={`${styles.action} ${flag ? styles.actionWarn : styles.actionOk}`}
       disabled={busy}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       onClick={async () => {
         setBusy(true)
         try {
@@ -49,7 +61,7 @@ const ActionButton: FC<{
         }
       }}
     >
-      {busy ? '…' : flag ? warnLabel : okLabel}
+      {label}
     </button>
   )
 }
@@ -57,6 +69,7 @@ const ActionButton: FC<{
 export const SngModal: FC = () => {
   const tool = useTool<SngAutoTool>()
   const [open, setOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [bases, setBases] = useState<SngBase[]>([])
 
   return (
@@ -72,6 +85,15 @@ export const SngModal: FC = () => {
         SNG Auto
       </button>
       <Modal open={open} onClose={() => setOpen(false)} title="SNG Bases">
+        <div className={styles.toolbar}>
+          <button
+            type="button"
+            className={styles.toolbarBtn}
+            onClick={() => setSettingsOpen(true)}
+          >
+            Settings
+          </button>
+        </div>
         <div className={styles.description}>
           <p>
             <strong>Supply</strong>: flagged if any consumed material is
@@ -119,6 +141,7 @@ export const SngModal: FC = () => {
                       flag={b.needsSupply}
                       warnLabel="Need Supply"
                       okLabel="OK"
+                      hoverLabel="Auto Supply"
                       onAction={() => tool.autoSupply(b)}
                     />
                   </td>
@@ -127,6 +150,7 @@ export const SngModal: FC = () => {
                       flag={b.needsSubmit}
                       warnLabel="Need Submit"
                       okLabel="OK"
+                      hoverLabel="Auto Submit"
                       onAction={() => tool.autoSubmit(b)}
                     />
                   </td>
@@ -136,6 +160,10 @@ export const SngModal: FC = () => {
           </tbody>
         </table>
       </Modal>
+      <SettingsModal
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+      />
     </>
   )
 }

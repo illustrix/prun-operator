@@ -1,4 +1,11 @@
-import { type FC, type ReactNode, useEffect } from 'react'
+import {
+  type FC,
+  type MouseEvent as ReactMouseEvent,
+  type ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import { createPortal } from 'react-dom'
 import styles from './Modal.module.css'
 
@@ -21,6 +28,17 @@ export const Modal: FC<ModalProps> = ({
   children,
   width,
 }) => {
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const [offset, setOffset] = useState({ x: 0, y: 0 })
+  const drag = useRef<{
+    startX: number
+    startY: number
+    baseX: number
+    baseY: number
+    x: number
+    y: number
+  } | null>(null)
+
   useEffect(() => {
     if (!open || hidden) return
     const handleKey = (e: KeyboardEvent) => {
@@ -29,6 +47,39 @@ export const Modal: FC<ModalProps> = ({
     document.addEventListener('keydown', handleKey)
     return () => document.removeEventListener('keydown', handleKey)
   }, [open, hidden, onClose])
+
+  const onHeaderMouseDown = (e: ReactMouseEvent) => {
+    // ignore drags that start on interactive elements (the close button)
+    if ((e.target as Element).closest('button')) return
+    e.preventDefault()
+    drag.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      baseX: offset.x,
+      baseY: offset.y,
+      x: offset.x,
+      y: offset.y,
+    }
+    // during drag we mutate the dialog's transform directly to avoid a
+    // React re-render on every mousemove. React state is synced on
+    // mouseup so subsequent renders keep the latest position.
+    const onMove = (ev: MouseEvent) => {
+      const d = drag.current
+      if (!d || !dialogRef.current) return
+      d.x = d.baseX + (ev.clientX - d.startX)
+      d.y = d.baseY + (ev.clientY - d.startY)
+      dialogRef.current.style.transform = `translate(${d.x}px, ${d.y}px)`
+    }
+    const onUp = () => {
+      const d = drag.current
+      if (d) setOffset({ x: d.x, y: d.y })
+      drag.current = null
+      document.removeEventListener('mousemove', onMove)
+      document.removeEventListener('mouseup', onUp)
+    }
+    document.addEventListener('mousemove', onMove)
+    document.addEventListener('mouseup', onUp)
+  }
 
   if (!open) return null
 
@@ -45,8 +96,15 @@ export const Modal: FC<ModalProps> = ({
         className={styles.backdropButton}
         onClick={onClose}
       />
-      <div className={styles.dialog} style={width ? { width } : undefined}>
-        <div className={styles.header}>
+      <div
+        ref={dialogRef}
+        className={styles.dialog}
+        style={{
+          width,
+          transform: `translate(${offset.x}px, ${offset.y}px)`,
+        }}
+      >
+        <div className={styles.header} onMouseDown={onHeaderMouseDown}>
           <div>{title}</div>
           <button
             type="button"

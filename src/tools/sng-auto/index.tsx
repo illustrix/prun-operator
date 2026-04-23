@@ -1,4 +1,5 @@
 import * as Rx from 'rxjs'
+import { showToast } from '../../components/Toast'
 import { assert } from '../../utils/assert'
 import { STR } from '../../utils/constants'
 import { getElementWithText, waitForElement } from '../../utils/selector'
@@ -173,9 +174,9 @@ export class SngAutoTool extends Tool {
     }).run()
   }
 
-  async autoSubmit(base: SngBase): Promise<void> {
+  async autoSubmit(_base: SngBase): Promise<void> {
     // TODO: drive the submit flow (export surplus output as sell contract)
-    console.log('SngAutoTool.autoSubmit', base)
+    showToast('Auto Submit is not yet implemented', 'warning')
   }
 
   // Build the BUY contract config for a base using the shared balance

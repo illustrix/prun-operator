@@ -1,6 +1,7 @@
 import { type FC, useEffect, useState } from 'react'
 import { LoadingOverlay } from '../../components/LoadingOverlay'
 import { Modal } from '../../components/Modal'
+import { showToast } from '../../components/Toast'
 import { useTool } from '../base/context'
 import type { SngAutoTool, SngBase } from './index'
 import { SettingsModal } from './SettingsModal'
@@ -120,16 +121,11 @@ export const SngModal: FC = () => {
         onClose={() => setOpen(false)}
         title="SNG Bases"
       >
-        <div className={styles.toolbar}>
-          <button
-            type="button"
-            className={styles.toolbarBtn}
-            onClick={() => setSettingsOpen(true)}
-          >
-            Settings
-          </button>
-        </div>
         <div className={styles.description}>
+          <p>
+            <strong>How it works</strong>: open the XIT BURN tile for each base
+            you want to manage; the tool will auto-detect them here.
+          </p>
           <p>
             <strong>Supply</strong>: flagged if any consumed material is
             projected to run out within 3 days. Click to run auto-supply.
@@ -138,6 +134,18 @@ export const SngModal: FC = () => {
             <strong>Submit</strong>: flagged if any produced material has more
             than 2 days of output in inventory. Click to run auto-submit.
           </p>
+          <p className={styles.testing}>
+            In testing — feedback welcome.
+          </p>
+        </div>
+        <div className={styles.toolbar}>
+          <button
+            type="button"
+            className={styles.toolbarBtn}
+            onClick={() => setSettingsOpen(true)}
+          >
+            Settings
+          </button>
         </div>
         <table className={styles.table}>
           <thead>
@@ -200,6 +208,17 @@ export const SngModal: FC = () => {
             )}
           </tbody>
         </table>
+        <div className={styles.footer}>
+          <button
+            type="button"
+            className={styles.fullAutoBtn}
+            onClick={() =>
+              showToast('Full Auto is not yet implemented', 'warning')
+            }
+          >
+            Full Auto
+          </button>
+        </div>
       </Modal>
       <SettingsModal
         open={settingsOpen}

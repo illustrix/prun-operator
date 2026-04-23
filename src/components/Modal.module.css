@@ -6,6 +6,16 @@
   align-items: center;
   justify-content: center;
   z-index: 9999;
+  animation: prun-operator-modal-fade 0.15s ease-out;
+}
+
+@keyframes prun-operator-modal-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .backdropButton {
@@ -33,6 +43,17 @@
   overflow: hidden;
   word-break: break-word;
   overflow-wrap: anywhere;
+  animation: prun-operator-modal-pop 0.18s ease-out;
+  will-change: transform;
+}
+
+@keyframes prun-operator-modal-pop {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .header {
@@ -42,6 +63,8 @@
   padding: 10px 14px;
   border-bottom: 1px solid #374151;
   font-weight: 600;
+  cursor: move;
+  user-select: none;
 }
 
 .closeButton {

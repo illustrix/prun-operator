@@ -10,6 +10,8 @@
 .toolbar {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 8px;
 }
 
@@ -26,6 +28,27 @@
 
 .toolbarBtn:hover {
   background-color: #4b5563;
+}
+
+.footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.fullAutoBtn {
+  padding: 6px 18px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.fullAutoBtn:hover {
+  background-color: #1d4ed8;
 }
 
 .description {
@@ -49,6 +72,12 @@
 
 .description strong {
   color: #e5e7eb;
+}
+
+.description p.testing {
+  margin-top: 8px;
+  font-style: italic;
+  color: #60a5fa;
 }
 
 .table {

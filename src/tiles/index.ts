@@ -2,6 +2,7 @@ import type { Class } from 'type-fest'
 import type { Tool } from '../tools/base/tool'
 import { BurnAuto } from '../tools/burn-auto'
 import { CopySellContractTool } from '../tools/copy-sell-contract'
+import { SngAutoTool } from '../tools/sng-auto'
 import { XitAutoTool } from '../tools/xit-auto'
 import { $tile, getTileCmd } from '../utils/tile'
 import { enhanceContractDraftTile } from './contract-draft-tile'
@@ -9,22 +10,24 @@ import { enhanceContractTile } from './contract-tile'
 import { enhanceFlightControlTile } from './flight-control-tile'
 
 type TileEnhanceMethod = (tile: Element) => void
+type TileEnhance = TileEnhanceMethod | Class<Tool>
+type TileEnhanceValue = TileEnhance | TileEnhance[]
 
-const tileMap: Record<string, TileEnhanceMethod | Class<Tool>> = {
-  CONTD: enhanceContractDraftTile,
-  CONT: enhanceContractTile,
-  SFC: enhanceFlightControlTile,
-  INV: CopySellContractTool,
-  'XIT BURN': BurnAuto,
-  'XIT ACT_': XitAutoTool,
+const tileMap: Record<string, TileEnhanceValue> = {
+  '^CONTD$': SngAutoTool,
+  '^CONTD ': enhanceContractDraftTile,
+  '^CONT ': enhanceContractTile,
+  '^SFC ': enhanceFlightControlTile,
+  '^INV ': CopySellContractTool,
+  '^XIT BURN ': BurnAuto,
+  '^XIT ACT_': XitAutoTool,
 }
 
-function getTileEnhanceMethod(tile: Element) {
+function getTileEnhance(tile: Element) {
   const tileCmd = getTileCmd(tile).toUpperCase()
   for (const cmd in tileMap) {
-    const match = cmd.endsWith('_')
-      ? tileCmd.startsWith(cmd.slice(0, -1)) // support cmd with variable suffix, like "XIT ACT_12345"
-      : cmd === tileCmd || tileCmd.startsWith(`${cmd} `)
+    const re = new RegExp(cmd, 'i')
+    const match = tileCmd.match(re)
     if (match) {
       return tileMap[cmd]
     }
@@ -44,16 +47,44 @@ const isTool = (obj: unknown): obj is Class<Tool> => {
 }
 
 const attachTool = (tool: Tool, tile: Element) => {
-  if (!tool.match()) {
-    console.log('tool match failed', tile, tool)
+  try {
+    tool.match()
+  } catch (e) {
+    console.warn('tool match failed', tile, tool, e)
     return
   }
-  const ok = tool.attach()
-  if (!ok) {
-    console.log('tool attach failed', tile, tool)
+
+  try {
+    tool.attach()
+  } catch (e) {
+    console.error('tool attach failed', tile, tool, e)
     return
   }
   toolMaps.set(tile, tool)
+}
+
+const enhanceTile = (tile: Element, enhance: TileEnhance) => {
+  if (isTool(enhance)) {
+    const tool = new enhance(tile)
+    attachTool(tool, tile)
+    return
+  }
+
+  try {
+    enhance(tile)
+  } catch (e: unknown) {
+    console.warn('failed to enhance', tile, enhance, e)
+  }
+}
+
+const applyEnhance = (tile: Element, enhance: TileEnhanceValue) => {
+  if (Array.isArray(enhance)) {
+    for (const item of enhance) {
+      applyEnhance(tile, item)
+    }
+    return
+  }
+  enhanceTile(tile, enhance)
 }
 
 async function processTile(tile: Element) {
@@ -61,19 +92,10 @@ async function processTile(tile: Element) {
 
   $tile.next(tile)
 
-  const tileEnhanceMethod = getTileEnhanceMethod(tile)
-  if (!tileEnhanceMethod) return
+  const tileEnhance = getTileEnhance(tile)
+  if (!tileEnhance) return
 
-  try {
-    if (isTool(tileEnhanceMethod)) {
-      const tool = new tileEnhanceMethod(tile)
-      attachTool(tool, tile)
-    } else {
-      tileEnhanceMethod(tile)
-    }
-  } catch (e: unknown) {
-    console.warn('failed to enhance', tile, e)
-  }
+  applyEnhance(tile, tileEnhance)
 
   // just do once. but our created elements may be removed. perhaps we need to
   // monitor that. for now it's fine.

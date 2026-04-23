@@ -54,22 +54,18 @@ export class CopySellContractTool extends Tool {
   protected copyButton?: HTMLButtonElement
   protected copySelectedButton?: HTMLButtonElement
   protected location?: string
-  protected locationLabel?: Element
 
-  override match(): boolean {
+  override match() {
     const locationLabel = this.tile.querySelector(
       '[class*="StoreView__capacity"]',
     )
-    if (!locationLabel) return false
+    assert(locationLabel, 'Location label not found')
     const location = getAddressCode(locationLabel.textContent.trim())
-    if (!location) return false
-    this.locationLabel = locationLabel
+    assert(location, 'Failed to parse location code')
     this.location = location
-    return true
-  }
-
-  override getContainer() {
-    return this.locationLabel?.parentNode as Element
+    assert(locationLabel.parentNode, 'location not found')
+    this.container = locationLabel.parentNode
+    return
   }
 
   override render(): ReactNode {

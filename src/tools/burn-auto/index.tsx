@@ -261,21 +261,15 @@ const ActionModal = () => {
 
 export class BurnAuto extends Tool {
   protected address?: string
-  protected container?: Element
   protected rows: BurnRow[] = []
 
-  override match(): boolean {
+  override match() {
     const cmd = getTileCmd(this.tile)
     const address = cmd.split(' ').pop()
-    if (!address) return false
+    assert(address, 'Address not found in tile command')
     const addressCode = getAddressCode(address, true)
-    if (!addressCode) return false
+    assert(addressCode, 'Failed to parse address code')
     this.address = addressCode
-    return true
-  }
-
-  override getContainer() {
-    return this.container
   }
 
   override render() {

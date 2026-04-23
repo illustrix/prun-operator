@@ -14,31 +14,23 @@ export class XitAutoTool extends Tool {
     return true
   }
 
-  override attach() {
-    waitForElement(this.tile, '[class*="ActionBar__container"]')
-      .then(actionBar => {
-        this.actionBar = actionBar
-        if (!this.actionBar) {
-          console.error('Action bar not found in tile', this.tile)
-          return
+  override async attach() {
+    this.actionBar = await waitForElement(
+      this.tile.el,
+      '[class*="ActionBar__container"]',
+    )
+    this.observer = new MutationObserver(mutations => {
+      for (const mutation of mutations) {
+        if (mutation.type === 'childList') {
+          this.watchActionBar()
         }
-        this.observer = new MutationObserver(mutations => {
-          for (const mutation of mutations) {
-            if (mutation.type === 'childList') {
-              this.watchActionBar()
-            }
-          }
-        })
-        this.observer.observe(this.actionBar, {
-          childList: true,
-          subtree: true,
-        })
-        this.watchActionBar()
-      })
-      .catch(err => {
-        console.error('Failed to find action bar in tile', this.tile, err)
-      })
-    return this
+      }
+    })
+    this.observer.observe(this.actionBar, {
+      childList: true,
+      subtree: true,
+    })
+    this.watchActionBar()
   }
 
   override cleanup(): void {

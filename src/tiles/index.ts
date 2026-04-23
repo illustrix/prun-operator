@@ -4,12 +4,12 @@ import { BurnAuto } from '../tools/burn-auto'
 import { CopySellContractTool } from '../tools/copy-sell-contract'
 import { SngAutoTool } from '../tools/sng-auto'
 import { XitAutoTool } from '../tools/xit-auto'
-import { $tile, getTileCmd } from '../utils/tile'
+import { $tile, Tile } from '../utils/tile'
 import { enhanceContractDraftTile } from './contract-draft-tile'
 import { enhanceContractTile } from './contract-tile'
 import { enhanceFlightControlTile } from './flight-control-tile'
 
-type TileEnhanceMethod = (tile: Element) => void
+type TileEnhanceMethod = (tile: Tile) => void
 type TileEnhance = TileEnhanceMethod | Class<Tool>
 type TileEnhanceValue = TileEnhance | TileEnhance[]
 
@@ -23,8 +23,8 @@ const tileMap: Record<string, TileEnhanceValue> = {
   '^XIT ACT_': XitAutoTool,
 }
 
-function getTileEnhance(tile: Element) {
-  const tileCmd = getTileCmd(tile).toUpperCase()
+function getTileEnhance(tile: Tile) {
+  const tileCmd = tile.cmd.toUpperCase()
   for (const cmd in tileMap) {
     const re = new RegExp(cmd, 'i')
     const match = tileCmd.match(re)
@@ -36,7 +36,7 @@ function getTileEnhance(tile: Element) {
 
 const PROCESSED_ATTR = 'data-prun-operator'
 
-const toolMaps = new Map<Element, Tool>()
+const toolMaps = new Map<Tile, Tool>()
 
 const isTool = (obj: unknown): obj is Class<Tool> => {
   return (
@@ -46,7 +46,7 @@ const isTool = (obj: unknown): obj is Class<Tool> => {
   )
 }
 
-const attachTool = (tool: Tool, tile: Element) => {
+const attachTool = (tool: Tool, tile: Tile) => {
   try {
     tool.match()
   } catch (e) {
@@ -54,16 +54,13 @@ const attachTool = (tool: Tool, tile: Element) => {
     return
   }
 
-  try {
-    tool.attach()
-  } catch (e) {
-    console.error('tool attach failed', tile, tool, e)
-    return
-  }
   toolMaps.set(tile, tool)
+  Promise.resolve(tool.attach()).catch(e => {
+    console.error('tool attach failed', tile, tool, e)
+  })
 }
 
-const enhanceTile = (tile: Element, enhance: TileEnhance) => {
+const enhanceTile = (tile: Tile, enhance: TileEnhance) => {
   if (isTool(enhance)) {
     const tool = new enhance(tile)
     attachTool(tool, tile)
@@ -77,7 +74,7 @@ const enhanceTile = (tile: Element, enhance: TileEnhance) => {
   }
 }
 
-const applyEnhance = (tile: Element, enhance: TileEnhanceValue) => {
+const applyEnhance = (tile: Tile, enhance: TileEnhanceValue) => {
   if (Array.isArray(enhance)) {
     for (const item of enhance) {
       applyEnhance(tile, item)
@@ -87,8 +84,8 @@ const applyEnhance = (tile: Element, enhance: TileEnhanceValue) => {
   enhanceTile(tile, enhance)
 }
 
-async function processTile(tile: Element) {
-  if (tile.hasAttribute(PROCESSED_ATTR)) return
+async function processTile(tile: Tile) {
+  if (tile.el.hasAttribute(PROCESSED_ATTR)) return
 
   $tile.next(tile)
 
@@ -99,14 +96,16 @@ async function processTile(tile: Element) {
 
   // just do once. but our created elements may be removed. perhaps we need to
   // monitor that. for now it's fine.
-  tile.setAttribute(PROCESSED_ATTR, 'true')
+  tile.el.setAttribute(PROCESSED_ATTR, 'true')
 }
 
 export function scanTiles() {
-  document.querySelectorAll('[class*="TileFrame__frame"]').forEach(processTile)
+  document.querySelectorAll('[class*="TileFrame__frame"]').forEach(el => {
+    processTile(new Tile(el))
+  })
 
   for (const [tile, tool] of toolMaps) {
-    if (!document.contains(tile)) {
+    if (!document.contains(tile.el)) {
       tool.cleanup()
       toolMaps.delete(tile)
     }

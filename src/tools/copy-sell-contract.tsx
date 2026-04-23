@@ -56,16 +56,16 @@ export class CopySellContractTool extends Tool {
   protected location?: string
 
   override match() {
-    const locationLabel = this.tile.querySelector(
-      '[class*="StoreView__capacity"]',
-    )
-    assert(locationLabel, 'Location label not found')
-    const location = getAddressCode(locationLabel.textContent.trim())
+    const label = this.tile.el.querySelector('[class*="StoreView__capacity"]')
+    assert(label, 'Location label not found')
+    const location = getAddressCode(label.textContent.trim())
     assert(location, 'Failed to parse location code')
     this.location = location
-    assert(locationLabel.parentNode, 'location not found')
-    this.container = locationLabel.parentNode
-    return
+  }
+
+  protected override getContainer() {
+    const label = this.tile.el.querySelector('[class*="StoreView__capacity"]')
+    return label?.parentNode ?? undefined
   }
 
   override render(): ReactNode {
@@ -105,7 +105,7 @@ export class CopySellContractTool extends Tool {
   }
 
   protected getContractItems(): ContractItem[] {
-    const inventoryGrid = this.tile.querySelector(
+    const inventoryGrid = this.tile.el.querySelector(
       '[class*="InventoryView__grid"]',
     )
     assert(inventoryGrid, 'must be grid view')
@@ -141,7 +141,7 @@ export class CopySellContractTool extends Tool {
   }
 
   protected getSelectedContractItems(): ContractItem[] {
-    const inventoryGrid = this.tile.querySelector(
+    const inventoryGrid = this.tile.el.querySelector(
       '[class*="InventoryView__grid"]',
     )
     assert(inventoryGrid, 'must be grid view')

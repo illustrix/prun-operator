@@ -8,7 +8,7 @@ import { sleep, waitFor } from '../utils/sleep'
 import {
   $tile,
   closeTile,
-  getTileCmd,
+  type Tile,
   waitForTile,
   waitForTileCmd,
 } from '../utils/tile'
@@ -17,10 +17,10 @@ export class AutoFuel {
   locationElement?: Element | null
   fuelField?: Element | null
 
-  constructor(private tile: Element) {}
+  constructor(private tile: Tile) {}
 
   attach() {
-    const fields = this.tile.querySelectorAll(
+    const fields = this.tile.el.querySelectorAll(
       '[class*="FormComponent__containerPassive"]',
     )
 
@@ -55,11 +55,10 @@ export class AutoFuel {
   }
 
   async run() {
-    const cmd = getTileCmd(this.tile)
-    const flightId = cmd.split(' ')[1]
+    const flightId = this.tile.cmd.split(' ')[1]
     assert(flightId, 'Flight ID not found in tile command')
 
-    const fuelContainer = this.tile.querySelector(
+    const fuelContainer = this.tile.el.querySelector(
       '[class*="ShipFuel__container"]',
     )
     assert(fuelContainer, 'Fuel container not found')
@@ -68,9 +67,7 @@ export class AutoFuel {
 
     const shipFuelTile = await Rx.firstValueFrom(
       $tile.pipe(
-        Rx.filter(
-          tile => getTileCmd(tile) === `SHPF ${flightId}`.toUpperCase(),
-        ),
+        Rx.filter(tile => tile.cmd === `SHPF ${flightId}`.toUpperCase()),
       ),
     )
     console.log('Auto fuel: Ship fuel tile opened')
@@ -86,7 +83,7 @@ export class AutoFuel {
     console.log('Auto fuel: Station tile opened')
     const warehouseButton = await waitFor(() =>
       getElementWithText(
-        stationTile,
+        stationTile.el,
         'span[class*="Link__link"]',
         STR.WAREHOUSE,
       ),
@@ -100,7 +97,7 @@ export class AutoFuel {
     console.log('Auto fuel: Warehouse tile opened')
     const autoStoreButton = await waitFor(() =>
       getElementWithText(
-        warehouseTile,
+        warehouseTile.el,
         'button[class*="Button__inline"]',
         STR.OPEN_STORE,
       ),
@@ -109,16 +106,16 @@ export class AutoFuel {
     await sleep(100)
     simulateClick(autoStoreButton)
 
-    const inventoryTile = await waitForTile(tile => {
-      const cmd = getTileCmd(tile)
-      return cmd.startsWith('INV') && tile.innerHTML.includes(stationName)
-    })
+    const inventoryTile = await waitForTile(
+      tile =>
+        tile.cmd.startsWith('INV') && tile.el.innerHTML.includes(stationName),
+    )
 
     console.log('Auto fuel: Inventory tile opened')
 
     await sleep(100)
 
-    const shipFuelColumn = shipFuelTile.querySelectorAll(
+    const shipFuelColumn = shipFuelTile.el.querySelectorAll(
       '[class*="ShipFuelInventory__column"]',
     )
 
@@ -142,7 +139,7 @@ export class AutoFuel {
       if (currentStr === maxStr) continue // already full
 
       const source = getElementWithText(
-        inventoryTile,
+        inventoryTile.el,
         '[class*="MaterialIcon__container"]',
         [materialName],
       )

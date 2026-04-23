@@ -7,6 +7,7 @@ import {
 } from '../utils/selector'
 import { simulateClick, simulateInput, simulateSelect } from '../utils/simulate'
 import { sleep } from '../utils/sleep'
+import type { Tile } from '../utils/tile'
 
 export interface ContractItem {
   commodity: string
@@ -22,14 +23,15 @@ export interface AutoSetContractConfig {
 }
 
 export async function autoSetContract(
-  tile: Element,
+  tile: Tile,
   config: AutoSetContractConfig,
 ) {
-  const selectTemplateButton = getButtonWithText(tile, STR.SELECT_TEMPLATE)
+  const el = tile.el
+  const selectTemplateButton = getButtonWithText(el, STR.SELECT_TEMPLATE)
   assert(selectTemplateButton, 'Select Template button not found')
   selectTemplateButton.click()
   await sleep(50)
-  const templateSelectContainer = tile.querySelector(
+  const templateSelectContainer = el.querySelector(
     'div[class*="TemplateSelection__templateTypeSelect"]',
   )
   assert(templateSelectContainer, 'Template select not found')
@@ -37,14 +39,14 @@ export async function autoSetContract(
   assert(templateSelect, 'Template select element not found')
   simulateSelect(templateSelect, config.template)
   await sleep(50)
-  const currencySelect = tile.querySelector<HTMLSelectElement>(
+  const currencySelect = el.querySelector<HTMLSelectElement>(
     'select[name="currency"]',
   )
   assert(currencySelect, 'Currency select not found')
   simulateSelect(currencySelect, config.currency)
   await sleep(50)
 
-  const addCommodityButton = getButtonWithText(tile, STR.ADD_COMMODITY)
+  const addCommodityButton = getButtonWithText(el, STR.ADD_COMMODITY)
   assert(addCommodityButton, 'Add Commodity button not found')
   // assert it already has one commodity row
   for (let i = 1; i < config.items.length; i++) {
@@ -54,13 +56,13 @@ export async function autoSetContract(
   for (let i = 0; i < config.items.length; i++) {
     const item = config.items[i]
     assert(item, `Item ${i} not found in config`)
-    const amountInput = tile.querySelector<HTMLInputElement>(
+    const amountInput = el.querySelector<HTMLInputElement>(
       `input[name="trades[${i}].amount"]`,
     )
     assert(amountInput, `Amount input for item ${i} not found`)
     simulateInput(amountInput, `${item.amount}`)
     await sleep(50)
-    const commodityLabel = tile.querySelector(
+    const commodityLabel = el.querySelector(
       `label[for="trades[${i}].material"]`,
     )
     assert(commodityLabel, `Commodity label for item ${i} not found`)
@@ -82,14 +84,14 @@ export async function autoSetContract(
     simulateClick(listItem)
     await sleep(50)
 
-    const priceInput = tile.querySelector<HTMLInputElement>(
+    const priceInput = el.querySelector<HTMLInputElement>(
       `input[name="trades[${i}].pricePerUnit"]`,
     )
     assert(priceInput, `Price input for item ${i} not found`)
     simulateInput(priceInput, `${item.price}`)
     await sleep(50)
   }
-  const locationLabel = tile.querySelector(`label[for="location"]`)
+  const locationLabel = el.querySelector(`label[for="location"]`)
   assert(locationLabel, `Location label not found`)
   const locationInput = locationLabel.parentNode?.querySelector('input')
   assert(locationInput, `Location input not found`)

@@ -1,7 +1,8 @@
 import { autoSetContract } from '../tools/auto-set-contract'
+import type { Tile } from '../utils/tile'
 
-export function enhanceContractDraftTile(tile: Element) {
-  const draftForm = tile.querySelector('[class*="Draft__form"]')
+export function enhanceContractDraftTile(tile: Tile) {
+  const draftForm = tile.el.querySelector('[class*="Draft__form"]')
   if (!draftForm) return
 
   const textarea = document.createElement('textarea')

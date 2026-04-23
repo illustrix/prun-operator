@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
-import { assert } from '../../utils/assert'
+import type { Tile } from '../../utils/tile'
 import { provideToolContext } from './context'
 
 export abstract class Tool {
@@ -11,32 +11,31 @@ export abstract class Tool {
 
   // react root element, move it if you want to change the position of the ui widget
   protected rootElement?: HTMLDivElement
-  // where to create the root element. if not specified, the widget won't be rendered
-  protected container?: Node
 
-  constructor(public tile: Element) {}
+  constructor(public tile: Tile) {}
 
-  // return false if you want to bypass some tiles silently
+  // throw to skip this tile
   match() {
     throw new Error('match method not implemented')
   }
 
-  createRootElement(): HTMLDivElement | undefined {
-    if (!this.container) return
-    const el = document.createElement('div')
-    this.container.appendChild(el)
-    return el
+  // where the widget will render. return undefined to skip rendering.
+  // may be sync or async.
+  protected getContainer(): Node | Promise<Node> | undefined {
+    return undefined
   }
 
   render(): ReactNode {
     throw new Error('render method not implemented')
   }
 
-  attach() {
-    const rootElement = this.createRootElement()
-    assert(rootElement, 'Failed to create root element for tool')
-    this.rootElement = rootElement
-    this.root = createRoot(rootElement)
+  async attach() {
+    const container = await this.getContainer()
+    if (!container) return
+    const el = document.createElement('div')
+    container.appendChild(el)
+    this.rootElement = el
+    this.root = createRoot(el)
     this.root.render(provideToolContext(this, this.render()))
   }
 

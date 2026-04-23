@@ -3,7 +3,6 @@ import { Modal } from '../../components/Modal'
 import { assert } from '../../utils/assert'
 import { getAddressCode } from '../../utils/game'
 import { waitForElement } from '../../utils/selector'
-import { getTileCmd } from '../../utils/tile'
 import { xitActTemplate } from '../../utils/xit-act'
 import type { AutoSetContractConfig } from '../auto-set-contract'
 import { useTool } from '../base/context'
@@ -264,8 +263,7 @@ export class BurnAuto extends Tool {
   protected rows: BurnRow[] = []
 
   override match() {
-    const cmd = getTileCmd(this.tile)
-    const address = cmd.split(' ').pop()
+    const address = this.tile.cmd.split(' ').pop()
     assert(address, 'Address not found in tile command')
     const addressCode = getAddressCode(address, true)
     assert(addressCode, 'Failed to parse address code')
@@ -276,16 +274,14 @@ export class BurnAuto extends Tool {
     return <ActionModal />
   }
 
-  override attach() {
-    waitForElement(this.tile, '[class*="ComExOrdersPanel__filter"]').then(
-      container => {
-        this.container = container
-        super.attach()
-        this.rootElement?.style.setProperty('display', 'flex')
-        this.rootElement?.style.setProperty('justify-content', 'flex-end')
-      },
-    )
-    return this
+  protected override getContainer() {
+    return waitForElement(this.tile.el, '[class*="ComExOrdersPanel__filter"]')
+  }
+
+  override async attach() {
+    await super.attach()
+    this.rootElement?.style.setProperty('display', 'flex')
+    this.rootElement?.style.setProperty('justify-content', 'flex-end')
   }
 
   async copyXitAct(items: NeededItem[]) {
@@ -318,7 +314,7 @@ export class BurnAuto extends Tool {
   }
 
   parseTable(): BurnRow[] {
-    const table = this.tile.querySelector('table')
+    const table = this.tile.el.querySelector('table')
     assert(table, 'burn table not found')
 
     const parseNumber = (text: string | null): number => {

@@ -1,10 +1,11 @@
 import { autoFulfillContract } from '../tools/auto-fulfill-contract'
 import { STR } from '../utils/constants'
 import { getElementWithText } from '../utils/selector'
+import type { Tile } from '../utils/tile'
 
-export function enhanceContractTile(tile: Element) {
+export function enhanceContractTile(tile: Tile) {
   const contractConditionsLabel = getElementWithText(
-    tile,
+    tile.el,
     'div[class*="SectionHeader__container"]',
     STR.CONTRACT_CONDITIONS,
   )

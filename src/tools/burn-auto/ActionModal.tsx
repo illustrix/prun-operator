@@ -37,13 +37,38 @@ export const ActionModal: FC = () => {
     [mode, rows, days, includeInventory],
   )
 
+  // Track deselected tickers so the default ("all selected") needs no
+  // initialization. Toggles persist across needed-list changes.
+  const [deselected, setDeselected] = useState<Set<string>>(new Set())
+
+  const filtered = useMemo(
+    () => needed.filter(item => !deselected.has(item.ticker)),
+    [needed, deselected],
+  )
+  const allSelected = needed.length > 0 && filtered.length === needed.length
+  const someSelected = filtered.length > 0 && filtered.length < needed.length
+
+  const toggleAll = () => {
+    setDeselected(
+      allSelected ? new Set(needed.map(i => i.ticker)) : new Set(),
+    )
+  }
+  const toggleOne = (ticker: string) => {
+    setDeselected(prev => {
+      const next = new Set(prev)
+      if (next.has(ticker)) next.delete(ticker)
+      else next.add(ticker)
+      return next
+    })
+  }
+
   const runCopy = async (label: string, fn: () => Promise<void>) => {
-    if (needed.length === 0) {
+    if (filtered.length === 0) {
       setStatus({ text: 'Nothing to copy.', error: true })
     } else {
       try {
         await fn()
-        setStatus({ text: `${label} copied (${needed.length} items)` })
+        setStatus({ text: `${label} copied (${filtered.length} items)` })
       } catch (err) {
         console.error(`${label} failed`, err)
         setStatus({
@@ -125,6 +150,17 @@ export const ActionModal: FC = () => {
         <table className={styles.table}>
           <thead>
             <tr>
+              <th className={styles.checkboxCell}>
+                <input
+                  type="checkbox"
+                  aria-label="Toggle all"
+                  checked={allSelected}
+                  ref={el => {
+                    if (el) el.indeterminate = someSelected
+                  }}
+                  onChange={toggleAll}
+                />
+              </th>
               <th className={styles.th}>Ticker</th>
               <th className={styles.thRight}>Inv</th>
               <th className={styles.thRight}>Target</th>
@@ -134,13 +170,21 @@ export const ActionModal: FC = () => {
           <tbody>
             {needed.length === 0 ? (
               <tr>
-                <td className={styles.emptyCell} colSpan={4}>
+                <td className={styles.emptyCell} colSpan={5}>
                   Nothing needed.
                 </td>
               </tr>
             ) : (
               needed.map(item => (
                 <tr key={item.ticker}>
+                  <td className={styles.checkboxCell}>
+                    <input
+                      type="checkbox"
+                      aria-label={`Include ${item.ticker}`}
+                      checked={!deselected.has(item.ticker)}
+                      onChange={() => toggleOne(item.ticker)}
+                    />
+                  </td>
                   <td className={styles.td}>{item.ticker}</td>
                   <td className={styles.numTd}>
                     {formatNumber(item.inventory)}
@@ -170,7 +214,7 @@ export const ActionModal: FC = () => {
           <button
             type="button"
             className={`${styles.action} ${styles.actionXit}`}
-            onClick={() => runCopy('XIT ACT', () => tool.copyXitAct(needed))}
+            onClick={() => runCopy('XIT ACT', () => tool.copyXitAct(filtered))}
           >
             Copy XIT ACT
           </button>
@@ -178,7 +222,7 @@ export const ActionModal: FC = () => {
             type="button"
             className={`${styles.action} ${styles.actionBuy}`}
             onClick={() =>
-              runCopy('Buying contract', () => tool.copyBuyContract(needed))
+              runCopy('Buying contract', () => tool.copyBuyContract(filtered))
             }
           >
             Copy Buying Contract

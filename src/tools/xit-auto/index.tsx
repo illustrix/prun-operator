@@ -72,6 +72,7 @@ export class XitAutoTool extends Tool {
 
   async autoAct() {
     while (this.actButton) {
+      await sleep(100)
       if (this.actButton.disabled) {
         await sleep(500)
         continue

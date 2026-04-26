@@ -5,9 +5,11 @@ import { STR } from '../../utils/constants'
 import { getElementWithText, waitForElement } from '../../utils/selector'
 import { simulateClick } from '../../utils/simulate'
 import { waitFor } from '../../utils/sleep'
-import { getAllTiles, type Tile, waitForTile } from '../../utils/tile'
+import { $tile, getAllTiles, type Tile, waitForTile } from '../../utils/tile'
+import { autoFulfillContract } from '../auto-fulfill-contract'
 import {
   type AutoSetContractConfig,
+  type ContractItem,
   ContractSetter,
   type ContractSetterOptions,
 } from '../auto-set-contract'
@@ -47,7 +49,22 @@ export interface SngBase {
 export interface ExistingContract {
   name: string
   partner: string
+  link?: Element
 }
+
+const SNG_CONTRACT_PATTERN = /^SNG[PS]-/i
+
+// Wait for the next tile whose cmd matches `pattern`, or resolve to null
+// after `ms`. Used when clicking something that may or may not surface a
+// new tile (already-open tiles don't re-emit on $tile).
+const waitForCmdOrNull = (pattern: string, ms = 5000): Promise<Tile | null> =>
+  Rx.firstValueFrom(
+    $tile.pipe(
+      Rx.filter(t => t.matchCmd(pattern)),
+      Rx.take(1),
+      Rx.timeout({ first: ms, with: () => Rx.of<Tile | null>(null) }),
+    ),
+  )
 
 const findBurnTile = (address: string): Tile | undefined => {
   return getAllTiles().find(
@@ -118,7 +135,7 @@ export class SngAutoTool extends Tool {
       if (!name) continue
       const partnerEl = cellPartner.querySelector('[class*="Link__link"]')
       const partner = partnerEl?.textContent.trim() ?? ''
-      contracts.push({ name, partner })
+      contracts.push({ name, partner, link: nameEl ?? undefined })
     }
     return contracts
   }
@@ -174,27 +191,132 @@ export class SngAutoTool extends Tool {
     }).run()
   }
 
-  async autoSubmit(_base: SngBase): Promise<void> {
-    // TODO: drive the submit flow (export surplus output as sell contract)
-    showToast('Auto Submit is not yet implemented', 'warning')
+  async autoSubmit(base: SngBase): Promise<void> {
+    this.step$.next('Preparing submit config')
+    const config = this.buildSubmitConfig(base)
+    if (!config) return
+
+    this.step$.next('Opening draft')
+    const existing = this.findExistingDraft(base, config)
+    const draft = existing
+      ? await this.openDraft(existing)
+      : await this.createNewDraft(base, config)
+
+    await new ContractSetter(draft, {
+      ...config,
+      autoSave: true,
+      autoSend: true,
+      onStep: step => this.step$.next(step),
+    }).run()
+  }
+
+  // Walk the existing-contracts snapshot and click "fulfill" on every
+  // active SNG[PS]- contract. Each contract is opened by clicking its
+  // name link (which surfaces a `CONT <id>` tile) and then handed off
+  // to the shared autoFulfillContract loop.
+  async autoFulfillAll(): Promise<void> {
+    await this.checkExistingContracts()
+    const targets = this.existingContracts.filter(c =>
+      SNG_CONTRACT_PATTERN.test(c.name),
+    )
+    if (targets.length === 0) {
+      showToast('No SNG contracts to fulfill', 'info')
+      return
+    }
+    for (const contract of targets) {
+      try {
+        this.step$.next(`Opening ${contract.name}`)
+        if (!contract.link) {
+          console.warn(`autoFulfillAll: missing link for ${contract.name}`)
+          continue
+        }
+        simulateClick(contract.link)
+        const tile = await waitForCmdOrNull('^CONT ')
+        if (!tile) {
+          console.warn(`autoFulfillAll: ${contract.name} did not open`)
+          continue
+        }
+        this.step$.next(`Fulfilling ${contract.name}`)
+        await autoFulfillContract(tile)
+      } catch (err) {
+        console.error(`autoFulfillAll: ${contract.name} failed`, err)
+      }
+    }
+    showToast(`Auto Fulfill done (${targets.length} contracts)`, 'success')
+  }
+
+  async autoSendAll(): Promise<void> {
+    // TODO: iterate bases and run autoSupply / autoSubmit for those that
+    // need it, skipping ones with an existing matching contract.
+    showToast('Auto Send Contract is not yet implemented', 'warning')
   }
 
   // Build the BUY contract config for a base using the shared balance
-  // policy. Currency and recipient fall back to settings defaults, then
-  // to `DEFAULT_CURRENCY`. Returns null when the base has no burn tile
-  // or nothing needs refilling.
+  // policy. Returns null when the base has no burn tile or nothing
+  // needs refilling.
   protected buildSupplyConfig(base: SngBase): ContractSetterOptions | null {
-    const tile = findBurnTile(base.address)
-    if (!tile) {
-      console.warn('autoSupply: no XIT BURN tile for', base.address)
-      return null
-    }
-    const rows = parseBurnTable(tile)
+    const rows = this.loadBurnRows(base)
+    if (!rows) return null
     const items = computeBalanced(rows, BALANCE_MIN_DAYS, BALANCE_REFILL_DAYS)
     if (items.length === 0) {
       console.log('autoSupply: nothing needed for', base.address)
       return null
     }
+    return this.contractConfig(
+      base,
+      'BUY',
+      items.map(item => ({
+        commodity: item.ticker,
+        amount: item.amount,
+        price: 1,
+      })),
+    )
+  }
+
+  // Build the SELL contract config: every produced material with a
+  // configured internal price is offered at its current inventory.
+  // Items without a price in `settings.prices` are skipped (with a
+  // warning). Returns null when nothing qualifies.
+  protected buildSubmitConfig(base: SngBase): ContractSetterOptions | null {
+    const rows = this.loadBurnRows(base)
+    if (!rows) return null
+    const prices = loadSettings().prices ?? {}
+    const items: ContractItem[] = []
+    for (const row of rows) {
+      if (!Number.isFinite(row.burn) || row.burn <= 0) continue
+      if (!Number.isFinite(row.inventory) || row.inventory <= 0) continue
+      const price = prices[row.ticker]
+      if (price === undefined) {
+        console.warn(`autoSubmit: no price for ${row.ticker}, skipping`)
+        continue
+      }
+      items.push({
+        commodity: row.ticker,
+        amount: Math.floor(row.inventory),
+        price,
+      })
+    }
+    if (items.length === 0) {
+      console.log('autoSubmit: nothing to submit for', base.address)
+      return null
+    }
+    return this.contractConfig(base, 'SELL', items)
+  }
+
+  protected loadBurnRows(base: SngBase) {
+    const tile = findBurnTile(base.address)
+    if (!tile) {
+      console.warn('SngAutoTool: no XIT BURN tile for', base.address)
+      return null
+    }
+    return parseBurnTable(tile)
+  }
+
+  protected contractConfig(
+    base: SngBase,
+    template: 'BUY' | 'SELL',
+    items: ContractItem[],
+  ): ContractSetterOptions {
     const settings = loadSettings()
     const baseSettings = settings.bases?.[base.address]
     const currency =
@@ -202,15 +324,11 @@ export class SngAutoTool extends Tool {
     const recipient =
       baseSettings?.owner ?? settings.defaultOwner ?? DEFAULT_OWNER
     return {
-      template: 'BUY',
+      template,
       currency,
       location: base.address,
       recipient,
-      items: items.map(item => ({
-        commodity: item.ticker,
-        amount: item.amount,
-        price: 1,
-      })),
+      items,
     }
   }
 

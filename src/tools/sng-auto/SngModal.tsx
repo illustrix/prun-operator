@@ -212,11 +212,16 @@ export const SngModal: FC = () => {
           <button
             type="button"
             className={styles.fullAutoBtn}
-            onClick={() =>
-              showToast('Full Auto is not yet implemented', 'warning')
-            }
+            onClick={() => runAction(() => tool.autoFulfillAll())}
           >
-            Full Auto
+            Auto Fulfill
+          </button>
+          <button
+            type="button"
+            className={styles.fullAutoBtn}
+            onClick={() => runAction(() => tool.autoSendAll())}
+          >
+            Auto Send Contract
           </button>
         </div>
       </Modal>

@@ -84,6 +84,13 @@
   color: #9ca3af;
 }
 
+.checkboxCell {
+  width: 24px;
+  padding: 4px 4px 4px 8px;
+  border-bottom: 1px solid #1f2937;
+  text-align: center;
+}
+
 .note {
   color: #9ca3af;
   font-size: 12px;

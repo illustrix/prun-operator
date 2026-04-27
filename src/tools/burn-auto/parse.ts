@@ -9,9 +9,9 @@ export interface BurnRow {
   days: number
 }
 
-export const getBurnAddress = (tile: Tile): string | null => {
+export const getBurnAddress = (tile: Tile) => {
   const address = tile.cmd.split(' ').pop()
-  if (!address) return null
+  if (!address) return
   return getAddressCode(address, true)
 }
 

@@ -1,4 +1,5 @@
 import { assert } from '../../utils/assert'
+import { normalizeAddress } from '../../utils/game'
 import { waitForElement } from '../../utils/selector'
 import { xitActTemplate } from '../../utils/xit-act'
 import type { AutoSetContractConfig } from '../auto-set-contract'
@@ -18,7 +19,7 @@ export class BurnAuto extends Tool {
   protected rows: BurnRow[] = []
 
   override match() {
-    const address = getBurnAddress(this.tile)
+    const address = normalizeAddress(getBurnAddress(this.tile))
     assert(address, 'Failed to parse burn tile address')
     this.address = address
   }

@@ -4,11 +4,12 @@ export const getAddressCode = (text: string, insensitive = false) => {
   return match ? match[0] : null
 }
 
-export const normalizeAddress = (address: string) => {
+export const normalizeAddress = (address?: string | undefined | null) => {
+  if (!address) return
   const [system, planet] = address.split('-')
 
-  if (!system || !/^[A-Z]{2}$i/.test(system)) return
-  if (!planet || !/^[0-9]{3}[a-zA-Z]$i/.test(planet)) return
+  if (!system || !/^[A-Za-z]{2}$/.test(system)) return
+  if (!planet || !/^[0-9]{3}[A-Za-z]$/.test(planet)) return
 
   return `${system.toUpperCase()}-${planet.toLowerCase()}`
 }

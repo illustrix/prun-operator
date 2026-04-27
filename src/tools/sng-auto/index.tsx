@@ -2,10 +2,17 @@ import * as Rx from 'rxjs'
 import { showToast } from '../../components/Toast'
 import { assert } from '../../utils/assert'
 import { STR } from '../../utils/constants'
+import { normalizeAddress } from '../../utils/game'
 import { getElementWithText, waitForElement } from '../../utils/selector'
 import { simulateClick } from '../../utils/simulate'
-import { waitFor } from '../../utils/sleep'
-import { $tile, getAllTiles, type Tile, waitForTile } from '../../utils/tile'
+import { sleep, waitFor } from '../../utils/sleep'
+import {
+  $tile,
+  closeTile,
+  getAllTiles,
+  type Tile,
+  waitForTile,
+} from '../../utils/tile'
 import { autoFulfillContract } from '../auto-fulfill-contract'
 import {
   type AutoSetContractConfig,
@@ -68,19 +75,25 @@ const waitForCmdOrNull = (pattern: string, ms = 5000): Promise<Tile | null> =>
 
 const findBurnTile = (address: string): Tile | undefined => {
   return getAllTiles().find(
-    t => t.matchCmd('^XIT BURN ') && getBurnAddress(t) === address,
+    t =>
+      t.matchCmd('^XIT BURN ') &&
+      normalizeAddress(getBurnAddress(t)) === address,
   )
+}
+
+// Draft names follow `SNGP-<address>-…` for BUY (supply/provision) and
+// `SNGS-<address>-…` for SELL (submit). Case varies in practice.
+const namePrefixFor = (base: SngBase, template: 'BUY' | 'SELL'): string => {
+  const addressCode = base.address.replace(/-/g, '').toUpperCase()
+  return template === 'BUY' ? `SNGP-${addressCode}-` : `SNGS-${addressCode}-`
 }
 
 const draftNamePrefix = (
   base: SngBase,
   config: AutoSetContractConfig,
 ): string | null => {
-  const addressCode = base.address.replace(/-/g, '').toUpperCase()
-  // Draft names follow `SNGP-<address>-…` for BUY (supply/provision) and
-  // `SNGS-<address>-…` for SELL (submit). Case varies in practice.
-  if (config.template === 'BUY') return `SNGP-${addressCode}-`
-  if (config.template === 'SELL') return `SNGS-${addressCode}-`
+  if (config.template === 'BUY') return namePrefixFor(base, 'BUY')
+  if (config.template === 'SELL') return namePrefixFor(base, 'SELL')
   return null
 }
 
@@ -141,9 +154,7 @@ export class SngAutoTool extends Tool {
   }
 
   // Find an existing contract whose name starts with `prefix`.
-  protected findExistingByPrefix(
-    prefix: string,
-  ): ExistingContract | undefined {
+  protected findExistingByPrefix(prefix: string): ExistingContract | undefined {
     const needle = prefix.toLowerCase()
     return this.existingContracts.find(c =>
       c.name.toLowerCase().startsWith(needle),
@@ -154,7 +165,7 @@ export class SngAutoTool extends Tool {
     const bases: SngBase[] = []
     for (const tile of getAllTiles()) {
       if (!tile.matchCmd('^XIT BURN ')) continue
-      const address = getBurnAddress(tile)
+      const address = normalizeAddress(getBurnAddress(tile))
       if (!address) continue
       const rows = parseBurnTable(tile)
       const addressCode = address.replace(/-/g, '').toUpperCase()
@@ -189,6 +200,10 @@ export class SngAutoTool extends Tool {
       autoSend: true,
       onStep: step => this.step$.next(step),
     }).run()
+    this.markContractSubmitted(base, 'BUY')
+    await sleep(100)
+    closeTile(draft)
+    await sleep(100)
   }
 
   async autoSubmit(base: SngBase): Promise<void> {
@@ -208,6 +223,23 @@ export class SngAutoTool extends Tool {
       autoSend: true,
       onStep: step => this.step$.next(step),
     }).run()
+    this.markContractSubmitted(base, 'SELL')
+    await sleep(100)
+    closeTile(draft)
+    await sleep(100)
+  }
+
+  // Optimistic update: after a successful submit, drop a synthetic row
+  // into existingContracts so collectBases() flips the matching base's
+  // status to "In Progress" without a full refresh. The next
+  // checkExistingContracts() call replaces it with the real row.
+  protected markContractSubmitted(base: SngBase, template: 'BUY' | 'SELL') {
+    const prefix = namePrefixFor(base, template)
+    if (this.findExistingByPrefix(prefix)) return
+    this.existingContracts = [
+      ...this.existingContracts,
+      { name: `${prefix}pending`, partner: '' },
+    ]
   }
 
   // Walk the existing-contracts snapshot and click "fulfill" on every
@@ -238,6 +270,9 @@ export class SngAutoTool extends Tool {
         }
         this.step$.next(`Fulfilling ${contract.name}`)
         await autoFulfillContract(tile)
+        await sleep(100)
+        closeTile(tile)
+        await sleep(100)
       } catch (err) {
         console.error(`autoFulfillAll: ${contract.name} failed`, err)
       }
@@ -318,7 +353,9 @@ export class SngAutoTool extends Tool {
     items: ContractItem[],
   ): ContractSetterOptions {
     const settings = loadSettings()
-    const baseSettings = settings.bases?.[base.address]
+    const address = normalizeAddress(base.address)
+    assert(address, 'invalid address')
+    const baseSettings = settings.bases?.[address]
     const currency =
       baseSettings?.currency ?? settings.defaultCurrency ?? DEFAULT_CURRENCY
     const recipient =

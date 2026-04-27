@@ -39,13 +39,7 @@ const ActionButton: FC<{
 }> = ({ flag, warnLabel, okLabel, hoverLabel, inProgress, onAction }) => {
   const [busy, setBusy] = useState(false)
   const [hovered, setHovered] = useState(false)
-  const label = busy
-    ? '…'
-    : hovered
-      ? hoverLabel
-      : flag
-        ? warnLabel
-        : okLabel
+  const label = busy ? '…' : hovered ? hoverLabel : flag ? warnLabel : okLabel
   const colorClass = inProgress
     ? styles.actionInProgress
     : flag
@@ -134,9 +128,7 @@ export const SngModal: FC = () => {
             <strong>Submit</strong>: flagged if any produced material has more
             than 2 days of output in inventory. Click to run auto-submit.
           </p>
-          <p className={styles.testing}>
-            In testing — feedback welcome.
-          </p>
+          <p className={styles.testing}>In testing — feedback welcome.</p>
         </div>
         <div className={styles.toolbar}>
           <button

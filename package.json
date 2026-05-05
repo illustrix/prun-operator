@@ -2,7 +2,7 @@
   "name": "prun-operator",
   "module": "index.ts",
   "type": "module",
-  "version": "2026-04-26",
+  "version": "2026-05-05",
   "description": "An automation tool for Prosperous Universe, providing features like auto-filling contract drafts and auto-fulfilling contracts. Use at your own risk.",
   "author": "ivy_exe",
   "license": "Apache-2.0",

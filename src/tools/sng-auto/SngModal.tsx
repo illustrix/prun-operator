@@ -1,4 +1,5 @@
 import { type FC, useEffect, useState } from 'react'
+import { ConfirmModal } from '../../components/ConfirmModal'
 import { LoadingOverlay } from '../../components/LoadingOverlay'
 import { Modal } from '../../components/Modal'
 import { showToast } from '../../components/Toast'
@@ -72,6 +73,7 @@ export const SngModal: FC = () => {
   const tool = useTool<SngAutoTool>()
   const [open, setOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [confirmFulfillOpen, setConfirmFulfillOpen] = useState(false)
   const [bases, setBases] = useState<SngBase[]>([])
   const [busy, setBusy] = useState(false)
   const [step, setStep] = useState<string | null>(null)
@@ -203,14 +205,16 @@ export const SngModal: FC = () => {
         <div className={styles.footer}>
           <button
             type="button"
-            className={styles.fullAutoBtn}
-            onClick={() => runAction(() => tool.autoFulfillAll())}
+            className={`${styles.fullAutoBtn} ${styles.fullAutoWarnBtn}`}
+            onClick={() => setConfirmFulfillOpen(true)}
           >
             Auto Fulfill
           </button>
           <button
             type="button"
             className={styles.fullAutoBtn}
+            disabled
+            title="Not yet implemented"
             onClick={() => runAction(() => tool.autoSendAll())}
           >
             Auto Send Contract
@@ -220,6 +224,30 @@ export const SngModal: FC = () => {
       <SettingsModal
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
+      />
+      <ConfirmModal
+        open={confirmFulfillOpen}
+        title="Auto Fulfill"
+        variant="warn"
+        confirmLabel="Run Auto Fulfill"
+        message={
+          <>
+            <p>
+              Auto Fulfill does <strong>not</strong> verify contract terms
+              (price, quantity, counterparty).
+            </p>
+            <p style={{ marginTop: 8 }}>
+              Not recommended if you manage contracts on behalf of others — a
+              malicious or mistaken contract will be fulfilled blindly.
+            </p>
+            <p style={{ marginTop: 8 }}>Continue?</p>
+          </>
+        }
+        onCancel={() => setConfirmFulfillOpen(false)}
+        onConfirm={() => {
+          setConfirmFulfillOpen(false)
+          runAction(() => tool.autoFulfillAll())
+        }}
       />
       <LoadingOverlay open={busy} step={step}>
         <div>Auto executing. Please do not interact with the page.</div>

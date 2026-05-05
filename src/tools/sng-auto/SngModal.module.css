@@ -48,8 +48,22 @@
   cursor: pointer;
 }
 
-.fullAutoBtn:hover {
+.fullAutoBtn:hover:not(:disabled) {
   background-color: #1d4ed8;
+}
+
+.fullAutoBtn:disabled {
+  background-color: #374151;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+.fullAutoWarnBtn {
+  background-color: #b45309;
+}
+
+.fullAutoWarnBtn:hover:not(:disabled) {
+  background-color: #d97706;
 }
 
 .description {

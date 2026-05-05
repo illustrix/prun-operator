@@ -1,5 +1,6 @@
 import type { Class } from 'type-fest'
 import type { Tool } from '../tools/base/tool'
+import { BuildingRepairAssistantAuto } from '../tools/bra-auto'
 import { BurnAuto } from '../tools/burn-auto'
 import { CopySellContractTool } from '../tools/copy-sell-contract'
 import { SngAutoTool } from '../tools/sng-auto'
@@ -20,6 +21,7 @@ const tileMap: Record<string, TileEnhanceValue> = {
   '^SFC ': enhanceFlightControlTile,
   '^INV ': CopySellContractTool,
   '^XIT BURN ': BurnAuto,
+  '^BRA': BuildingRepairAssistantAuto,
   '^XIT ACT_': XitAutoTool,
 }
 

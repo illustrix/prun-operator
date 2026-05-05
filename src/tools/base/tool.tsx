@@ -19,7 +19,7 @@ export abstract class Tool {
 
   // where the widget will render. return undefined to skip rendering.
   // may be sync or async.
-  protected getContainer(): Node | Promise<Node> | undefined {
+  protected getContainer(): Node | Promise<Node | undefined> | undefined {
     return undefined
   }
 

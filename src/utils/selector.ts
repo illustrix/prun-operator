@@ -56,6 +56,19 @@ export async function waitForElement(
   }
 }
 
+// Match a `[class*="FormComponent__container"]` row in `root` whose
+// `label > span` text equals `label`. Used to anchor inputs that have
+// no `for`/`name` attribute (PrUn renders many fields this way).
+export const findFormComponentByLabel = (
+  root: ParentNode,
+  label: string,
+): Element | null => {
+  for (const c of root.querySelectorAll('[class*="FormComponent__container"]')) {
+    if (c.querySelector('label > span')?.textContent.trim() === label) return c
+  }
+  return null
+}
+
 export const getParentMatching = (
   element: Element,
   selector: string,

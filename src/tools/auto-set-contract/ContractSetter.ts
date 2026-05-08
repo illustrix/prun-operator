@@ -5,6 +5,7 @@ import {
 import { assert } from '../../utils/assert'
 import { STR } from '../../utils/constants'
 import {
+  findFormComponentByLabel,
   getButtonWithText,
   getElementWithText,
   waitForElement,
@@ -25,6 +26,9 @@ export interface ContractSetterOptions extends AutoSetContractConfig {
   autoSave?: boolean
   autoSend?: boolean
   recipient?: string
+  // Rename the draft to this when set. Callers decide whether the current
+  // name is acceptable; if `name` is provided, we always rewrite it.
+  name?: string
   onStep?: (step: string) => void
 }
 
@@ -43,6 +47,10 @@ export class ContractSetter {
   }
 
   async run(): Promise<void> {
+    if (this.config.name) {
+      this.step('Applying name')
+      await this.applyName()
+    }
     this.step('Applying template')
     await this.applyTemplate()
     this.step('Applying currency')
@@ -68,6 +76,31 @@ export class ContractSetter {
       this.step('Sending draft')
       await this.sendDraft()
     }
+  }
+
+  // The Name field lives in the first Draft__form (header form) — there's
+  // no `name` attribute or `for` on the label, so we match by the label
+  // span's text. Typing into the input enables that form's own Save button,
+  // which we click to commit the rename.
+  async applyName(): Promise<void> {
+    if (!this.config.name) return
+    const firstDraftForm = this.el.querySelector('[class*="Draft__form"]')
+    assert(firstDraftForm, 'First draft form not found')
+    const nameContainer = findFormComponentByLabel(firstDraftForm, 'Name')
+    assert(nameContainer, 'Name form component not found')
+    const nameInput = nameContainer.querySelector<HTMLInputElement>(
+      'input[type="text"]',
+    )
+    assert(nameInput, 'Name input not found')
+    nameInput.focus()
+    await sleep(STEP_DELAY)
+    simulateInput(nameInput, this.config.name)
+    await sleep(STEP_DELAY)
+    const saveButton = getButtonWithText(firstDraftForm, STR.SAVE)
+    assert(saveButton, 'Save button in header form not found')
+    simulateClick(saveButton)
+    await sleep(STEP_DELAY)
+    await awaitActionFeedback(this.el, 5000)
   }
 
   async applyTemplate(): Promise<void> {

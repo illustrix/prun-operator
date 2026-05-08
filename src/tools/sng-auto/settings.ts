@@ -1,3 +1,5 @@
+import { normalizeAddress } from '../../utils/game'
+
 const STORAGE_KEY = 'prun-operator:sng-settings'
 
 export interface SngBaseSettings {
@@ -12,13 +14,30 @@ export interface SngSettings {
   defaultCurrency?: string
 }
 
+const normalizeBaseKeys = (
+  bases: Record<string, SngBaseSettings> | undefined,
+): Record<string, SngBaseSettings> | undefined => {
+  if (!bases) return bases
+  const out: Record<string, SngBaseSettings> = {}
+  for (const [key, value] of Object.entries(bases)) {
+    const normalized = normalizeAddress(key) ?? key
+    out[normalized] = value
+  }
+  return out
+}
+
+export const normalizeSettings = (settings: SngSettings): SngSettings => ({
+  ...settings,
+  bases: normalizeBaseKeys(settings.bases),
+})
+
 export const loadSettings = (): SngSettings => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return {}
     const parsed = JSON.parse(raw)
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      return parsed as SngSettings
+      return normalizeSettings(parsed as SngSettings)
     }
     return {}
   } catch (err) {
@@ -28,5 +47,5 @@ export const loadSettings = (): SngSettings => {
 }
 
 export const saveSettings = (settings: SngSettings): void => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(normalizeSettings(settings)))
 }

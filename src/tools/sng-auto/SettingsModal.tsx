@@ -1,7 +1,12 @@
 import { type FC, useEffect, useState } from 'react'
 import { Modal } from '../../components/Modal'
 import styles from './SettingsModal.module.css'
-import { loadSettings, saveSettings, type SngSettings } from './settings'
+import {
+  loadSettings,
+  normalizeSettings,
+  saveSettings,
+  type SngSettings,
+} from './settings'
 
 interface Props {
   open: boolean
@@ -28,8 +33,10 @@ export const SettingsModal: FC<Props> = ({ open, onClose, onImport }) => {
       if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
         throw new Error('Root must be a JSON object')
       }
-      saveSettings(parsed as SngSettings)
-      onImport?.(parsed as SngSettings)
+      const normalized = normalizeSettings(parsed as SngSettings)
+      saveSettings(normalized)
+      setText(JSON.stringify(normalized, null, 2))
+      onImport?.(normalized)
       setStatus({ text: 'Settings saved.' })
       setTimeout(() => setStatus(null), 2000)
     } catch (err) {

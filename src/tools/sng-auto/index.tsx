@@ -88,6 +88,35 @@ const namePrefixFor = (base: SngBase, template: 'BUY' | 'SELL'): string => {
   return template === 'BUY' ? `SNGP-${addressCode}-` : `SNGS-${addressCode}-`
 }
 
+// Full draft name. BUY uses the configured refill target (days the
+// supply contract is meant to top up to). SELL uses the rounded current
+// output buildup, falling back to 0 when not finite.
+const buildContractName = (
+  base: SngBase,
+  template: 'BUY' | 'SELL',
+): string => {
+  const days =
+    template === 'BUY'
+      ? BALANCE_REFILL_DAYS
+      : Number.isFinite(base.outputDays)
+        ? Math.round(base.outputDays as number)
+        : 0
+  return `${namePrefixFor(base, template)}${days}d`
+}
+
+// A draft needs renaming when it's brand-new (no existing row) or its
+// current name doesn't start with the SNG prefix for this base+template.
+const needsRename = (
+  existing: ContractDraftRow | null,
+  base: SngBase,
+  template: 'BUY' | 'SELL',
+): boolean => {
+  if (!existing) return true
+  return !existing.name.toLowerCase().startsWith(
+    namePrefixFor(base, template).toLowerCase(),
+  )
+}
+
 const draftNamePrefix = (
   base: SngBase,
   config: AutoSetContractConfig,
@@ -196,6 +225,9 @@ export class SngAutoTool extends Tool {
 
     await new ContractSetter(draft, {
       ...config,
+      name: needsRename(existing, base, 'BUY')
+        ? buildContractName(base, 'BUY')
+        : undefined,
       autoSave: true,
       autoSend: true,
       onStep: step => this.step$.next(step),
@@ -219,6 +251,9 @@ export class SngAutoTool extends Tool {
 
     await new ContractSetter(draft, {
       ...config,
+      name: needsRename(existing, base, 'SELL')
+        ? buildContractName(base, 'SELL')
+        : undefined,
       autoSave: true,
       autoSend: true,
       onStep: step => this.step$.next(step),

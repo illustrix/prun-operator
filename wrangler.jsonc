@@ -16,7 +16,7 @@
       ]
     },
     "production": {
-      "routes": [{ "pattern": "prop.auroras.xyz", "custom_domain": true }]
+      "routes": [{ "pattern": "prop.auroras.xyz", "custom_domain": true }],"name": "prun-operator"
     }
   }
 }

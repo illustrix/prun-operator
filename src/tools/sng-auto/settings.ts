@@ -5,6 +5,7 @@ const STORAGE_KEY = 'prun-operator:sng-settings'
 export interface SngBaseSettings {
   owner?: string
   currency?: string
+  excludes?: string[]
 }
 
 export interface SngSettings {
@@ -12,6 +13,21 @@ export interface SngSettings {
   prices?: Record<string, number>
   defaultOwner?: string
   defaultCurrency?: string
+  excludes?: string[]
+}
+
+// Combine the global excludes with per-base excludes for `address` into
+// a Set of upper-cased tickers. Used by autoSubmit to skip materials.
+export const collectExcludes = (
+  settings: SngSettings,
+  address: string,
+): Set<string> => {
+  const set = new Set<string>()
+  for (const list of [settings.excludes, settings.bases?.[address]?.excludes]) {
+    if (!list) continue
+    for (const t of list) set.add(t.toUpperCase())
+  }
+  return set
 }
 
 const normalizeBaseKeys = (

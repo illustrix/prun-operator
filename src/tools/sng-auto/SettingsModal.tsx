@@ -53,12 +53,13 @@ export const SettingsModal: FC<Props> = ({ open, onClose, onImport }) => {
         className={styles.textarea}
         placeholder={`{
   "bases": {
-    "QQ-001a": { "currency": "ICA", "owner": "Alice" }
+    "QQ-001a": { "currency": "ICA", "owner": "Alice", "excludes": ["LST"] }
   },
   "prices": {
     "FLX": 1200,
     "BMF": 400
-  }
+  },
+  "excludes": ["RAT"]
 }`}
         value={text}
         onChange={e => setText(e.target.value)}

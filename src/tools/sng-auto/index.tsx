@@ -37,7 +37,7 @@ import {
   parseContractDraftTable,
 } from './contractDrafts'
 import { SngModal } from './SngModal'
-import { loadSettings } from './settings'
+import { collectExcludes, loadSettings } from './settings'
 
 const DEFAULT_CURRENCY = 'ICA'
 const DEFAULT_OWNER = 'RestOwner'
@@ -346,15 +346,20 @@ export class SngAutoTool extends Tool {
   // Build the SELL contract config: every produced material with a
   // configured internal price is offered at its current inventory.
   // Items without a price in `settings.prices` are skipped (with a
-  // warning). Returns null when nothing qualifies.
+  // warning). Tickers listed in `settings.excludes` (global) or the
+  // matching base's `excludes` are skipped silently. Returns null when
+  // nothing qualifies.
   protected buildSubmitConfig(base: SngBase): ContractSetterOptions | null {
     const rows = this.loadBurnRows(base)
     if (!rows) return null
-    const prices = loadSettings().prices ?? {}
+    const settings = loadSettings()
+    const prices = settings.prices ?? {}
+    const excludes = collectExcludes(settings, base.address)
     const items: ContractItem[] = []
     for (const row of rows) {
       if (!Number.isFinite(row.burn) || row.burn <= 0) continue
       if (!Number.isFinite(row.inventory) || row.inventory <= 0) continue
+      if (excludes.has(row.ticker.toUpperCase())) continue
       const price = prices[row.ticker]
       if (price === undefined) {
         console.warn(`autoSubmit: no price for ${row.ticker}, skipping`)

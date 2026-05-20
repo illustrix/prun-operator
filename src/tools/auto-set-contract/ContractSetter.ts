@@ -188,17 +188,24 @@ export class ContractSetter {
     locationInput.focus()
     await sleep(STEP_DELAY)
     simulateInput(locationInput, this.config.location)
-    const locationResultSection = await waitFor(() => {
-      return getElementWithText(
+    // The address search is debounced + async — waiting for the section
+    // to appear isn't enough (it can be holding stale results). Poll
+    // until a list item actually matches the address we typed.
+    const needle = this.config.location.toUpperCase()
+    const locationResult = await waitFor(() => {
+      const section = getElementWithText(
         document,
         'div[class*="AddressSelector__sectionContainer"]',
         STR.SEARCH_RESULTS,
       )
-    })
-    await sleep(SEARCH_DELAY)
-    assert(locationResultSection, 'Location result not found')
-    const locationResult = locationResultSection.querySelector('ul li')
-    assert(locationResult, 'Location result item not found')
+      if (!section) return null
+      for (const li of section.querySelectorAll('ul li')) {
+        if (li.textContent.toUpperCase().includes(needle)) return li
+      }
+      return null
+    }, 5000)
+    assert(locationResult, `Location "${this.config.location}" not in results`)
+    await sleep(STEP_DELAY)
     simulateClick(locationResult)
     await sleep(STEP_DELAY)
     const staticInputs = this.el.querySelectorAll(

@@ -106,6 +106,9 @@ export const maxOutputDays = (rows: BurnRow[]): number | null => {
 
 export const BALANCE_MIN_DAYS = 2
 export const BALANCE_REFILL_DAYS = 4
+// Minimum units to request for trickle materials (consumed < 1/day), so a
+// refill doesn't round up to a single unit and force constant re-requests.
+export const BALANCE_MIN_BATCH = 5
 
 export interface NeededItem {
   ticker: string
@@ -142,10 +145,13 @@ export const computeNeeded = (
 //   • days > minDays + refillDays : skip (over-stocked)
 //   • days < minDays               : buy refillDays worth
 //   • otherwise                    : top up to (minDays + refillDays) days
+// `minBatch` floors the request for trickle materials (consumed < 1/day),
+// where a refill would otherwise round up to a single unit. 0 disables it.
 export const computeBalanced = (
   rows: BurnRow[],
   minDays: number,
   refillDays: number,
+  minBatch = 0,
 ): NeededItem[] => {
   const items: NeededItem[] = []
   const targetDays = minDays + refillDays
@@ -155,11 +161,14 @@ export const computeBalanced = (
     if (row.days > targetDays) continue
 
     const consumption = -row.burn
-    const amount =
+    let amount =
       row.days < minDays
         ? refillDays * consumption
         : targetDays * consumption - row.inventory
     if (amount <= 0) continue
+    if (consumption < 1 && minBatch > 0) {
+      amount = Math.max(amount, minBatch)
+    }
     items.push({
       ticker: row.ticker,
       inventory: row.inventory,

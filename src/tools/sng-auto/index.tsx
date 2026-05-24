@@ -416,11 +416,13 @@ export class SngAutoTool extends Tool {
       baseSettings?.currency ?? settings.defaultCurrency ?? DEFAULT_CURRENCY
     const recipient =
       baseSettings?.owner ?? settings.defaultOwner ?? DEFAULT_OWNER
+    const deadline = baseSettings?.deadline ?? settings.defaultDeadline
     return {
       template,
       currency,
       location: base.address,
       recipient,
+      deadline,
       items,
     }
   }

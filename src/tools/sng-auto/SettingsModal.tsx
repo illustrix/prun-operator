@@ -52,8 +52,9 @@ export const SettingsModal: FC<Props> = ({ open, onClose, onImport }) => {
       <textarea
         className={styles.textarea}
         placeholder={`{
+  "defaultDeadline": 7,
   "bases": {
-    "QQ-001a": { "currency": "ICA", "owner": "Alice", "excludes": ["LST"] }
+    "QQ-001a": { "currency": "ICA", "owner": "Alice", "deadline": 14, "excludes": ["LST"] }
   },
   "prices": {
     "FLX": 1200,

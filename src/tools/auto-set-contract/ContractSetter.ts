@@ -22,6 +22,10 @@ import type { AutoSetContractConfig } from './types'
 const STEP_DELAY = 50
 const SEARCH_DELAY = 500
 
+// Label of the deadline field in the contract draft form. Anchored by
+// text because the field has no stable name/for attribute.
+const DEADLINE_LABEL = 'Deadline'
+
 export interface ContractSetterOptions extends AutoSetContractConfig {
   autoSave?: boolean
   autoSend?: boolean
@@ -64,6 +68,10 @@ export class ContractSetter {
     }
     this.step('Applying location')
     await this.applyLocation()
+    if (this.config.deadline !== undefined) {
+      this.step('Applying deadline')
+      await this.applyDeadline()
+    }
     if (this.config.autoSave) {
       this.step('Saving draft')
       await this.saveDraft()
@@ -218,6 +226,25 @@ export class ContractSetter {
     const totalPriceField = staticInputs[1]
     assert(totalPriceField, 'Total price field not found')
     simulateClick(totalPriceField) // defocus to trigger any onBlur handlers
+    await sleep(STEP_DELAY)
+  }
+
+  // Set the contract conditions' deadline (in days). The field has no
+  // stable `name`/`for`, so we anchor it by its label text the same way
+  // applyName() does. Label text pending confirmation against the live
+  // draft form's DOM.
+  async applyDeadline(): Promise<void> {
+    if (this.config.deadline === undefined) return
+    const container = findFormComponentByLabel(this.el, DEADLINE_LABEL)
+    assert(
+      container,
+      `Deadline field ("${DEADLINE_LABEL}") not found in draft form`,
+    )
+    const input = container.querySelector<HTMLInputElement>('input')
+    assert(input, 'Deadline input not found')
+    input.focus()
+    await sleep(STEP_DELAY)
+    simulateInput(input, `${this.config.deadline}`)
     await sleep(STEP_DELAY)
   }
 

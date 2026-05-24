@@ -5,6 +5,7 @@ const STORAGE_KEY = 'prun-operator:sng-settings'
 export interface SngBaseSettings {
   owner?: string
   currency?: string
+  deadline?: number
   excludes?: string[]
 }
 
@@ -13,6 +14,7 @@ export interface SngSettings {
   prices?: Record<string, number>
   defaultOwner?: string
   defaultCurrency?: string
+  defaultDeadline?: number
   excludes?: string[]
 }
 

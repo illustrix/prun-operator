@@ -36,7 +36,7 @@ const ActionButton: FC<{
   okLabel: string
   hoverLabel: string
   inProgress?: boolean
-  onAction: () => void | Promise<void>
+  onAction: (dryRun: boolean) => void | Promise<void>
 }> = ({ flag, warnLabel, okLabel, hoverLabel, inProgress, onAction }) => {
   const [busy, setBusy] = useState(false)
   const [hovered, setHovered] = useState(false)
@@ -53,10 +53,12 @@ const ActionButton: FC<{
       disabled={busy}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      onClick={async () => {
+      onClick={async e => {
+        // Hold ⌘ (Command) to dry-run: fill + save the draft but don't send.
+        const dryRun = e.metaKey
         setBusy(true)
         try {
-          await onAction()
+          await onAction(dryRun)
         } catch (err) {
           console.error('SNG action failed', err)
         } finally {
@@ -130,6 +132,11 @@ export const SngModal: FC = () => {
             <strong>Submit</strong>: flagged if any produced material has more
             than 2 days of output in inventory. Click to run auto-submit.
           </p>
+          <p>
+            <strong>Dry run</strong>: hold <strong>⌘ (Command)</strong> while
+            clicking Supply or Submit to fill and save the draft without sending
+            it, so you can review it first.
+          </p>
           <p className={styles.testing}>In testing — feedback welcome.</p>
         </div>
         <div className={styles.toolbar}>
@@ -182,7 +189,9 @@ export const SngModal: FC = () => {
                       okLabel={b.existingSupply ? 'In Progress' : 'OK'}
                       hoverLabel="Auto Supply"
                       inProgress={!!b.existingSupply}
-                      onAction={() => runAction(() => tool.autoSupply(b))}
+                      onAction={dryRun =>
+                        runAction(() => tool.autoSupply(b, dryRun))
+                      }
                     />
                   </td>
                   <td className={styles.td}>
@@ -194,7 +203,9 @@ export const SngModal: FC = () => {
                       okLabel={b.existingSubmit ? 'In Progress' : 'OK'}
                       hoverLabel="Auto Submit"
                       inProgress={!!b.existingSubmit}
-                      onAction={() => runAction(() => tool.autoSubmit(b))}
+                      onAction={dryRun =>
+                        runAction(() => tool.autoSubmit(b, dryRun))
+                      }
                     />
                   </td>
                 </tr>

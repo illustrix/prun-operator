@@ -22,6 +22,7 @@ import {
 } from '../auto-set-contract'
 import { Tool } from '../base/tool'
 import {
+  BALANCE_MIN_BATCH,
   BALANCE_MIN_DAYS,
   BALANCE_REFILL_DAYS,
   computeBalanced,
@@ -212,7 +213,9 @@ export class SngAutoTool extends Tool {
     return bases
   }
 
-  async autoSupply(base: SngBase): Promise<void> {
+  // `dryRun` fills and saves the draft but skips the final send, leaving
+  // the draft tile open for review (triggered by ⌘-clicking in the modal).
+  async autoSupply(base: SngBase, dryRun = false): Promise<void> {
     this.step$.next('Preparing supply config')
     const config = this.buildSupplyConfig(base)
     if (!config) return
@@ -229,16 +232,20 @@ export class SngAutoTool extends Tool {
         ? buildContractName(base, 'BUY')
         : undefined,
       autoSave: true,
-      autoSend: true,
+      autoSend: !dryRun,
       onStep: step => this.step$.next(step),
     }).run()
+    if (dryRun) {
+      showToast('Dry run: supply draft saved but not sent', 'info')
+      return
+    }
     this.markContractSubmitted(base, 'BUY')
     await sleep(100)
     closeTile(draft)
     await sleep(100)
   }
 
-  async autoSubmit(base: SngBase): Promise<void> {
+  async autoSubmit(base: SngBase, dryRun = false): Promise<void> {
     this.step$.next('Preparing submit config')
     const config = this.buildSubmitConfig(base)
     if (!config) return
@@ -255,9 +262,13 @@ export class SngAutoTool extends Tool {
         ? buildContractName(base, 'SELL')
         : undefined,
       autoSave: true,
-      autoSend: true,
+      autoSend: !dryRun,
       onStep: step => this.step$.next(step),
     }).run()
+    if (dryRun) {
+      showToast('Dry run: submit draft saved but not sent', 'info')
+      return
+    }
     this.markContractSubmitted(base, 'SELL')
     await sleep(100)
     closeTile(draft)
@@ -327,7 +338,12 @@ export class SngAutoTool extends Tool {
   protected buildSupplyConfig(base: SngBase): ContractSetterOptions | null {
     const rows = this.loadBurnRows(base)
     if (!rows) return null
-    const items = computeBalanced(rows, BALANCE_MIN_DAYS, BALANCE_REFILL_DAYS)
+    const items = computeBalanced(
+      rows,
+      BALANCE_MIN_DAYS,
+      BALANCE_REFILL_DAYS,
+      BALANCE_MIN_BATCH,
+    )
     if (items.length === 0) {
       console.log('autoSupply: nothing needed for', base.address)
       return null

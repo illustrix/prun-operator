@@ -135,6 +135,14 @@ export class SngAutoTool extends Tool {
   // idle. SngModal subscribes to surface progress in the loading overlay.
   readonly step$ = new Rx.BehaviorSubject<string | null>(null)
 
+  // emits overall progress for multi-base batch actions (e.g. autoSendAll);
+  // null when there's no determinate total. SngModal feeds it to the shared
+  // LoadingOverlay's progress bar.
+  readonly progress$ = new Rx.BehaviorSubject<{
+    current: number
+    total: number
+  } | null>(null)
+
   protected override getContainer() {
     return waitForElement(this.tile.el, '[class*="ActionBar__container"]')
   }
@@ -326,10 +334,56 @@ export class SngAutoTool extends Tool {
     showToast(`Auto Fulfill done (${targets.length} contracts)`, 'success')
   }
 
+  // Iterate every detected base and send the contracts it needs: a supply
+  // (BUY) draft when it's low and has no in-progress supply contract, plus a
+  // submit (SELL) draft when it has surplus output and no in-progress submit
+  // contract. Bases already covered by an existing matching contract are
+  // skipped — the same rule the per-base Supply / Submit buttons use. Each
+  // send is isolated in try/catch so one failure doesn't abort the rest.
   async autoSendAll(): Promise<void> {
-    // TODO: iterate bases and run autoSupply / autoSubmit for those that
-    // need it, skipping ones with an existing matching contract.
-    showToast('Auto Send Contract is not yet implemented', 'warning')
+    await this.checkExistingContracts()
+    const bases = this.collectBases()
+    // Flatten the work into a single task list so the progress bar can show
+    // one overall total across both supply and submit across every base.
+    const tasks: { base: SngBase; kind: 'supply' | 'submit' }[] = []
+    for (const base of bases) {
+      if (base.needsSupply && !base.existingSupply) {
+        tasks.push({ base, kind: 'supply' })
+      }
+      if (base.needsSubmit && !base.existingSubmit) {
+        tasks.push({ base, kind: 'submit' })
+      }
+    }
+    if (tasks.length === 0) {
+      showToast('No bases need supply or submit', 'info')
+      return
+    }
+    const total = tasks.length
+    let done = 0
+    let sent = 0
+    try {
+      for (const { base, kind } of tasks) {
+        const label = base.name ?? base.address
+        this.progress$.next({ current: done, total })
+        try {
+          if (kind === 'supply') {
+            this.step$.next(`Supplying ${label}`)
+            await this.autoSupply(base)
+          } else {
+            this.step$.next(`Submitting ${label}`)
+            await this.autoSubmit(base)
+          }
+          sent++
+        } catch (err) {
+          console.error(`autoSendAll: ${kind} ${base.address} failed`, err)
+        }
+        done++
+        this.progress$.next({ current: done, total })
+      }
+    } finally {
+      this.progress$.next(null)
+    }
+    showToast(`Auto Send done (${sent}/${total} contracts)`, 'success')
   }
 
   // Build the BUY contract config for a base using the shared balance

@@ -5,6 +5,12 @@ All notable changes to PrUn Operator are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project uses date-based versioning (`YYYY-MM-DD`).
 
+## [2026-05-29]
+
+### Added
+- SNG Auto Send Contract: send supply and submit contracts for every base that needs them in one click, skipping bases with a matching contract already in progress.
+- Overall progress bar in the loading overlay, shown while Auto Send Contract runs.
+
 ## [2026-05-24]
 
 ### Added

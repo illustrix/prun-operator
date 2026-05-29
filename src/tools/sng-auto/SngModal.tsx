@@ -76,13 +76,22 @@ export const SngModal: FC = () => {
   const [open, setOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
   const [confirmFulfillOpen, setConfirmFulfillOpen] = useState(false)
+  const [confirmSendOpen, setConfirmSendOpen] = useState(false)
   const [bases, setBases] = useState<SngBase[]>([])
   const [busy, setBusy] = useState(false)
   const [step, setStep] = useState<string | null>(null)
+  const [progress, setProgress] = useState<{
+    current: number
+    total: number
+  } | null>(null)
 
   useEffect(() => {
-    const sub = tool.step$.subscribe(setStep)
-    return () => sub.unsubscribe()
+    const stepSub = tool.step$.subscribe(setStep)
+    const progressSub = tool.progress$.subscribe(setProgress)
+    return () => {
+      stepSub.unsubscribe()
+      progressSub.unsubscribe()
+    }
   }, [tool])
 
   const runAction = async (fn: () => Promise<void>) => {
@@ -223,10 +232,8 @@ export const SngModal: FC = () => {
           </button>
           <button
             type="button"
-            className={styles.fullAutoBtn}
-            disabled
-            title="Not yet implemented"
-            onClick={() => runAction(() => tool.autoSendAll())}
+            className={`${styles.fullAutoBtn} ${styles.fullAutoWarnBtn}`}
+            onClick={() => setConfirmSendOpen(true)}
           >
             Auto Send Contract
           </button>
@@ -260,7 +267,34 @@ export const SngModal: FC = () => {
           runAction(() => tool.autoFulfillAll())
         }}
       />
-      <LoadingOverlay open={busy} step={step}>
+      <ConfirmModal
+        open={confirmSendOpen}
+        title="Auto Send Contract"
+        variant="warn"
+        confirmLabel="Run Auto Send"
+        message={
+          <>
+            <p>
+              This fills, saves, and <strong>sends</strong> a contract for every
+              base that needs supply or submit, skipping ones with a matching
+              contract already in progress.
+            </p>
+            <p style={{ marginTop: 8 }}>
+              Sent contracts go to each base's configured owner. Review prices
+              and recipients in Settings first — to check a single draft without
+              sending, hold <strong>⌘ (Command)</strong> on its Supply / Submit
+              button instead.
+            </p>
+            <p style={{ marginTop: 8 }}>Continue?</p>
+          </>
+        }
+        onCancel={() => setConfirmSendOpen(false)}
+        onConfirm={() => {
+          setConfirmSendOpen(false)
+          runAction(() => tool.autoSendAll())
+        }}
+      />
+      <LoadingOverlay open={busy} step={step} progress={progress}>
         <div>Auto executing. Please do not interact with the page.</div>
         <div>If it seems stuck, refresh the page.</div>
       </LoadingOverlay>

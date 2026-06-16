@@ -268,10 +268,17 @@ export class ContractSetter {
     const saveButton = getButtonWithText(secondDraftForm, STR.SAVE)
     assert(saveButton, 'Save button not found')
     saveButton.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    // The Save button only enables once the form has finished validating the
+    // freshly-applied template/items. Clicking it while still disabled is a
+    // silent no-op that leaves the draft unsaved and makes the later Send
+    // fail, so wait for it to become enabled before clicking.
+    await waitFor(() => !saveButton.disabled, 5000)
     await sleep(STEP_DELAY)
     simulateClick(saveButton)
-    await sleep(STEP_DELAY)
-    await awaitActionFeedback(this.el, 500)
+    // Use a real timeout and surface any server-side error: a swallowed
+    // failure here would let us proceed to Send on an unsaved draft.
+    const err = await awaitActionFeedback(this.el, 5000)
+    if (err) throw new Error(`Save failed: ${err}`)
   }
 
   // Fill the recipient / counterparty field with `this.config.recipient`.

@@ -49,6 +49,11 @@ export default defineConfig(({ mode }) => ({
       },
     }),
   ],
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+    __IS_DEV__: JSON.stringify(mode === 'development'),
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
   build: {
     rolldownOptions: {
       output: {

@@ -5,6 +5,14 @@ All notable changes to PrUn Operator are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project uses date-based versioning (`YYYY-MM-DD`).
 
+## [2026-06-16]
+
+### Added
+- Version indicator in the game's frame footer, linking to the project site (shows the build time on development builds).
+
+### Fixed
+- Contract drafts now reliably save before sending: wait for the Save button to enable before clicking and surface server-side save errors, so Send no longer proceeds on an unsaved draft.
+
 ## [2026-05-29]
 
 ### Added

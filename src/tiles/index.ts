@@ -9,6 +9,7 @@ import { $allTiles, $tile, Tile } from '../utils/tile'
 import { enhanceContractDraftTile } from './contract-draft-tile'
 import { enhanceContractTile } from './contract-tile'
 import { enhanceFlightControlTile } from './flight-control-tile'
+import { ensureVersionLabel } from './version-footer'
 
 type TileEnhanceMethod = (tile: Tile) => void
 type TileEnhance = TileEnhanceMethod | Class<Tool>
@@ -97,6 +98,8 @@ async function processTile(tile: Tile) {
 }
 
 function scanAndHandleTiles() {
+  ensureVersionLabel()
+
   const allTiles = [
     ...document.querySelectorAll('[class*="TileFrame__frame"]'),
   ].map(el => new Tile(el))

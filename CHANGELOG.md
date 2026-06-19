@@ -10,6 +10,8 @@ and the project uses date-based versioning (`YYYY-MM-DD`).
 ### Added
 - Burn Auto Provision table now colors each material ticker as a badge, matching the game's material colors (lifted from the BURN table's category classes).
 - Quick-select buttons in the Burn Auto Provision table to bulk-select Workforce Supply (consumables) or Production Supply (everything else).
+- Burn Auto Provision table now shows separate Base and Warehouse inventory columns, reading warehouse stock from the matching WAR tile.
+- SNG auto supply can count warehouse stock toward reserves via a new `includeWarehouse` setting (global or per-base).
 
 ## [2026-06-16]
 

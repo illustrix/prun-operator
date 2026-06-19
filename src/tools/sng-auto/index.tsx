@@ -39,6 +39,7 @@ import {
 } from './contractDrafts'
 import { SngModal } from './SngModal'
 import { collectExcludes, loadSettings } from './settings'
+import { applyWarehouseStock, getWarehouseStock } from './warehouse'
 
 const DEFAULT_CURRENCY = 'ICA'
 const DEFAULT_OWNER = 'RestOwner'
@@ -390,8 +391,14 @@ export class SngAutoTool extends Tool {
   // policy. Returns null when the base has no burn tile or nothing
   // needs refilling.
   protected buildSupplyConfig(base: SngBase): ContractSetterOptions | null {
-    const rows = this.loadBurnRows(base)
+    let rows = this.loadBurnRows(base)
     if (!rows) return null
+    if (this.includeWarehouse(base)) {
+      const stock = getWarehouseStock(base.address)
+      // Stub returns null for now; once implemented this folds warehouse
+      // quantities into each row's inventory before the balance math.
+      if (stock) rows = applyWarehouseStock(rows, stock)
+    }
     const items = computeBalanced(
       rows,
       BALANCE_MIN_DAYS,
@@ -446,6 +453,14 @@ export class SngAutoTool extends Tool {
       return null
     }
     return this.contractConfig(base, 'SELL', items)
+  }
+
+  // Per-base setting wins over the global default; off when neither is set.
+  protected includeWarehouse(base: SngBase): boolean {
+    const settings = loadSettings()
+    const address = normalizeAddress(base.address)
+    const baseSettings = address ? settings.bases?.[address] : undefined
+    return baseSettings?.includeWarehouse ?? settings.includeWarehouse ?? false
   }
 
   protected loadBurnRows(base: SngBase) {

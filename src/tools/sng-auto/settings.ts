@@ -7,6 +7,9 @@ export interface SngBaseSettings {
   currency?: string
   deadline?: number
   excludes?: string[]
+  // Count warehouse stock toward reserves when computing auto supply.
+  // Overrides the global default for this base when set.
+  includeWarehouse?: boolean
 }
 
 export interface SngSettings {
@@ -16,6 +19,8 @@ export interface SngSettings {
   defaultCurrency?: string
   defaultDeadline?: number
   excludes?: string[]
+  // Global default for counting warehouse stock toward auto supply reserves.
+  includeWarehouse?: boolean
 }
 
 // Combine the global excludes with per-base excludes for `address` into

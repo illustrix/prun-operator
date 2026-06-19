@@ -3,6 +3,7 @@ import { Modal } from '../../components/Modal'
 import { useTool } from '../base/context'
 import styles from './ActionModal.module.css'
 import type { BurnAuto } from './index'
+import type { WarehouseStock } from '../sng-auto/warehouse'
 import {
   BALANCE_MIN_DAYS,
   BALANCE_REFILL_DAYS,
@@ -25,6 +26,7 @@ export const ActionModal: FC = () => {
   const [days, setDays] = useState(4)
   const [includeInventory, setIncludeInventory] = useState(false)
   const [rows, setRows] = useState<BurnRow[]>([])
+  const [warehouse, setWarehouse] = useState<WarehouseStock | null>(null)
 
   const [status, setStatus] = useState<{
     text: string
@@ -99,6 +101,7 @@ export const ActionModal: FC = () => {
         className={styles.trigger}
         onClick={() => {
           setRows(tool.parseTable())
+          setWarehouse(tool.warehouseStock())
           setOpen(true)
         }}
       >
@@ -193,7 +196,8 @@ export const ActionModal: FC = () => {
                 />
               </th>
               <th className={styles.th}>Ticker</th>
-              <th className={styles.thRight}>Inv</th>
+              <th className={styles.thRight}>Base</th>
+              <th className={styles.thRight}>Warehouse</th>
               <th className={styles.thRight}>Target</th>
               <th className={styles.thRight}>Needed</th>
             </tr>
@@ -201,7 +205,7 @@ export const ActionModal: FC = () => {
           <tbody>
             {needed.length === 0 ? (
               <tr>
-                <td className={styles.emptyCell} colSpan={5}>
+                <td className={styles.emptyCell} colSpan={6}>
                   Nothing needed.
                 </td>
               </tr>
@@ -223,6 +227,11 @@ export const ActionModal: FC = () => {
                   </td>
                   <td className={styles.numTd}>
                     {formatNumber(item.inventory)}
+                  </td>
+                  <td className={styles.numTd}>
+                    {warehouse
+                      ? formatNumber(warehouse.get(item.ticker.toUpperCase()) ?? 0)
+                      : '—'}
                   </td>
                   <td className={styles.numTd}>{formatNumber(item.gross)}</td>
                   <td className={`${styles.numTd} ${styles.numTdBold}`}>

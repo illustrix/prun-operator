@@ -4,6 +4,10 @@ import { waitForElement } from '../../utils/selector'
 import { xitActTemplate } from '../../utils/xit-act'
 import type { AutoSetContractConfig } from '../auto-set-contract'
 import { Tool } from '../base/tool'
+import {
+  getWarehouseStock,
+  type WarehouseStock,
+} from '../sng-auto/warehouse'
 import { ActionModal } from './ActionModal'
 import {
   type BurnRow,
@@ -69,5 +73,11 @@ export class BurnAuto extends Tool {
 
   parseTable(): BurnRow[] {
     return parseBurnTable(this.tile)
+  }
+
+  // Warehouse stock for this base's location, or null when no matching INV
+  // tile is open. Used to show a warehouse column in the provision table.
+  warehouseStock(): WarehouseStock | null {
+    return this.address ? getWarehouseStock(this.address) : null
   }
 }

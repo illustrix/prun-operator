@@ -1,9 +1,11 @@
-import { readFileSync } from 'node:fs'
 import babel from '@rolldown/plugin-babel'
 import react, { reactCompilerPreset } from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import monkey, { cdn } from 'vite-plugin-monkey'
 import pkg from './package.json' with { type: 'json' }
+
+// Userscript build only. The marketing/changelog site is a separate Vite
+// project — see vite.web.config.ts and scripts/build-web.ts.
 
 // Identity follows Cloudflare's ENVIRONMENT var — `staging` produces a
 // Testing userscript that Tampermonkey treats as a separate install;
@@ -24,16 +26,6 @@ export default defineConfig(({ mode }) => {
     plugins: [
       react(),
       babel({ presets: [reactCompilerPreset()] }),
-      {
-        name: 'html-version',
-        generateBundle() {
-          const html = readFileSync('index.html', 'utf-8').replace(
-            /%APP_VERSION%/g,
-            pkg.version,
-          )
-          this.emitFile({ type: 'asset', fileName: 'index.html', source: html })
-        },
-      },
       monkey({
         entry: 'src/main.ts',
         userscript: {

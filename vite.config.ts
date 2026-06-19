@@ -12,53 +12,64 @@ const isTesting = process.env.ENVIRONMENT === 'staging'
 
 const STABLE_URL = 'https://prop.auroras.xyz/prun-operator.user.js'
 const TESTING_URL = 'https://prop-testing.auroras.xyz/prun-operator.user.js'
-const UPDATE_URL = isTesting ? TESTING_URL : STABLE_URL
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
-  plugins: [
-    react(),
-    babel({ presets: [reactCompilerPreset()] }),
-    {
-      name: 'html-version',
-      generateBundle() {
-        const html = readFileSync('index.html', 'utf-8').replace(
-          /%APP_VERSION%/g,
-          pkg.version,
-        )
-        this.emitFile({ type: 'asset', fileName: 'index.html', source: html })
-      },
-    },
-    monkey({
-      entry: 'src/main.ts',
-      userscript: {
-        name: isTesting ? 'PrUn Operator (Testing)' : 'PrUn Operator',
-        namespace: isTesting
-          ? 'https://prop-testing.auroras.xyz/'
-          : 'https://explorer.auroras.xyz/',
-        match: ['https://apex.prosperousuniverse.com/'],
-        icon: 'https://www.google.com/s2/favicons?sz=64&domain=prosperousuniverse.com',
-        grant: 'none',
-        updateURL: UPDATE_URL,
-        downloadURL: UPDATE_URL,
-      },
-      build: {
-        externalGlobals: {
-          rxjs: cdn.unpkg('rxjs', 'dist/bundles/rxjs.umd.min.js'),
+export default defineConfig(({ mode }) => {
+  // In dev, leave the update/download URLs unset so Tampermonkey won't
+  // auto-update over the locally-served build.
+  const updateURL =
+    mode === 'development' ? undefined : isTesting ? TESTING_URL : STABLE_URL
+
+  return {
+    plugins: [
+      react(),
+      babel({ presets: [reactCompilerPreset()] }),
+      {
+        name: 'html-version',
+        generateBundle() {
+          const html = readFileSync('index.html', 'utf-8').replace(
+            /%APP_VERSION%/g,
+            pkg.version,
+          )
+          this.emitFile({ type: 'asset', fileName: 'index.html', source: html })
         },
       },
-    }),
-  ],
-  define: {
-    __APP_VERSION__: JSON.stringify(pkg.version),
-    __IS_DEV__: JSON.stringify(mode === 'development'),
-    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
-  },
-  build: {
-    rolldownOptions: {
-      output: {
-        minify: mode === 'production',
+      monkey({
+        entry: 'src/main.ts',
+        userscript: {
+          name:
+            mode === 'development'
+              ? 'PrUn Operator (Dev)'
+              : isTesting
+                ? 'PrUn Operator (Testing)'
+                : 'PrUn Operator',
+          namespace: isTesting
+            ? 'https://prop-testing.auroras.xyz/'
+            : 'https://explorer.auroras.xyz/',
+          match: ['https://apex.prosperousuniverse.com/'],
+          icon: 'https://www.google.com/s2/favicons?sz=64&domain=prosperousuniverse.com',
+          grant: 'none',
+          updateURL,
+          downloadURL: updateURL,
+        },
+        build: {
+          externalGlobals: {
+            rxjs: cdn.unpkg('rxjs', 'dist/bundles/rxjs.umd.min.js'),
+          },
+        },
+      }),
+    ],
+    define: {
+      __APP_VERSION__: JSON.stringify(pkg.version),
+      __IS_DEV__: JSON.stringify(mode === 'development'),
+      __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    },
+    build: {
+      rolldownOptions: {
+        output: {
+          minify: mode === 'production',
+        },
       },
     },
-  },
-}))
+  }
+})

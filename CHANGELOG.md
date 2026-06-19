@@ -5,6 +5,12 @@ All notable changes to PrUn Operator are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project uses date-based versioning (`YYYY-MM-DD`).
 
+## [2026-06-20]
+
+### Added
+- Burn Auto Provision table now colors each material ticker as a badge, matching the game's material colors (lifted from the BURN table's category classes).
+- Quick-select buttons in the Burn Auto Provision table to bulk-select Workforce Supply (consumables) or Production Supply (everything else).
+
 ## [2026-06-16]
 
 ### Added

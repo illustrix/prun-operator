@@ -9,6 +9,8 @@ import {
   type BurnRow,
   computeBalanced,
   computeNeeded,
+  isWorkforceSupply,
+  type NeededItem,
 } from './parse'
 
 type Mode = 'fixed' | 'balance'
@@ -53,6 +55,16 @@ export const ActionModal: FC = () => {
       allSelected ? new Set(needed.map(i => i.ticker)) : new Set(),
     )
   }
+  // Select only the items matching `predicate`, deselecting the rest.
+  const selectOnly = (predicate: (item: NeededItem) => boolean) => {
+    setDeselected(new Set(needed.filter(i => !predicate(i)).map(i => i.ticker)))
+  }
+
+  const workforceCount = useMemo(
+    () => needed.filter(isWorkforceSupply).length,
+    [needed],
+  )
+  const productionCount = needed.length - workforceCount
   const toggleOne = (ticker: string) => {
     setDeselected(prev => {
       const next = new Set(prev)
@@ -147,6 +159,25 @@ export const ActionModal: FC = () => {
             {BALANCE_MIN_DAYS + BALANCE_REFILL_DAYS} days, skip.
           </div>
         )}
+        <div className={styles.fieldRow}>
+          <span>Quick select:</span>
+          <button
+            type="button"
+            className={styles.selectBtn}
+            disabled={workforceCount === 0}
+            onClick={() => selectOnly(isWorkforceSupply)}
+          >
+            Workforce Supply ({workforceCount})
+          </button>
+          <button
+            type="button"
+            className={styles.selectBtn}
+            disabled={productionCount === 0}
+            onClick={() => selectOnly(item => !isWorkforceSupply(item))}
+          >
+            Production Supply ({productionCount})
+          </button>
+        </div>
         <table className={styles.table}>
           <thead>
             <tr>
@@ -185,7 +216,11 @@ export const ActionModal: FC = () => {
                       onChange={() => toggleOne(item.ticker)}
                     />
                   </td>
-                  <td className={styles.td}>{item.ticker}</td>
+                  <td className={styles.td}>
+                    <span className={`${styles.tickerBadge} ${item.colorClasses}`}>
+                      {item.ticker}
+                    </span>
+                  </td>
                   <td className={styles.numTd}>
                     {formatNumber(item.inventory)}
                   </td>

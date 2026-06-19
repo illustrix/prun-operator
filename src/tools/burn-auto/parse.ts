@@ -7,12 +7,27 @@ export interface BurnRow {
   burn: number
   need: number
   days: number
+  // `rp-ticker-* rp-category-*` classes lifted from the MaterialRow's
+  // ColoredIcon, so the game/extension's global material-color CSS can
+  // tint the ticker in our own table too. Empty when absent.
+  colorClasses: string
 }
 
 export const getBurnAddress = (tile: Tile) => {
   const address = tile.cmd.split(' ').pop()
   if (!address) return
   return getAddressCode(address, true)
+}
+
+// Pull the `rp-ticker-*` / `rp-category-*` tokens off the MaterialRow's
+// ColoredIcon container (where the extension puts them) so we can reapply
+// them to our own ticker cell.
+const extractColorClasses = (cell: Element | undefined): string => {
+  const icon = cell?.querySelector('[class*="ColoredIcon__container"]')
+  if (!icon) return ''
+  return [...icon.classList]
+    .filter(c => c.startsWith('rp-ticker-') || c.startsWith('rp-category-'))
+    .join(' ')
 }
 
 const parseNumber = (text: string | null): number => {
@@ -49,7 +64,8 @@ export const parseBurnTable = (tile: Tile): BurnRow[] => {
       const days = parseNumber(cells[4]?.textContent ?? null)
       if ([inventory, burn, need, days].some(n => Number.isNaN(n))) continue
 
-      rows.push({ ticker, inventory, burn, need, days })
+      const colorClasses = extractColorClasses(cells[0])
+      rows.push({ ticker, inventory, burn, need, days, colorClasses })
     }
   }
   return rows
@@ -104,6 +120,19 @@ export const maxOutputDays = (rows: BurnRow[]): number | null => {
   return Number.isFinite(max) ? max : null
 }
 
+// The `rp-category-*` slug (e.g. "consumables-basic", "chemicals") parsed
+// out of the lifted color classes. Empty when no category class is present.
+export const categoryOf = (colorClasses: string): string =>
+  colorClasses
+    .split(/\s+/)
+    .find(c => c.startsWith('rp-category-'))
+    ?.slice('rp-category-'.length) ?? ''
+
+// Consumables (basic/luxury rations, etc.) are workforce supply; everything
+// else (chemicals, parts, gases, …) is production supply.
+export const isWorkforceSupply = (item: { colorClasses: string }): boolean =>
+  categoryOf(item.colorClasses).includes('consumables')
+
 export const BALANCE_MIN_DAYS = 2
 export const BALANCE_REFILL_DAYS = 4
 // Minimum units to request for trickle materials (consumed < 1/day), so a
@@ -115,6 +144,7 @@ export interface NeededItem {
   inventory: number
   gross: number
   amount: number
+  colorClasses: string
 }
 
 // Fixed policy: buy `days` worth of every consumed material (optionally
@@ -135,6 +165,7 @@ export const computeNeeded = (
       inventory: row.inventory,
       gross,
       amount: Math.ceil(amount),
+      colorClasses: row.colorClasses,
     })
   }
   return items
@@ -174,6 +205,7 @@ export const computeBalanced = (
       inventory: row.inventory,
       gross: targetDays * consumption,
       amount: Math.ceil(amount),
+      colorClasses: row.colorClasses,
     })
   }
   return items

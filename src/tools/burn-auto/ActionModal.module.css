@@ -39,6 +39,25 @@
   color: #f3f4f6;
 }
 
+.selectBtn {
+  padding: 3px 10px;
+  font-size: 12px;
+  color: #f3f4f6;
+  background-color: #374151;
+  border: 1px solid #4b5563;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.selectBtn:hover:not(:disabled) {
+  background-color: #4b5563;
+}
+
+.selectBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 .table {
   width: 100%;
   border-collapse: collapse;
@@ -65,6 +84,18 @@
 .td {
   padding: 4px 8px;
   border-bottom: 1px solid #1f2937;
+}
+
+/* Material badge: box shape only — background/text color comes from the
+   game's `rp-ticker-*`/`rp-category-*` classes applied alongside it. */
+.tickerBadge {
+  display: inline-block;
+  min-width: 44px;
+  padding: 3px 8px;
+  border-radius: 2px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 12px;
 }
 
 .numTd {
